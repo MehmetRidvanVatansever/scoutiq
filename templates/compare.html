@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Oyuncu Karşılaştırma</h4>
+{% if players %}
+<div class="table-responsive">
+<table class="table bg-white text-center align-middle">
+  <thead class="table-dark"><tr><th></th>
+    {% for p in players %}<th><a class="text-white" href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a>
+      <form method="post" action="{{ url_for('compare_remove', pid=p.player_id) }}">
+        <button class="btn btn-outline-light btn-xs mt-1">Çıkar</button></form></th>{% endfor %}
+  </tr></thead>
+  <tbody>
+    <tr><th>Yaş</th>{% for p in players %}<td>{{ p.age or '-' }}</td>{% endfor %}</tr>
+    <tr><th>Ülke</th>{% for p in players %}<td>{{ p.country or '-' }}</td>{% endfor %}</tr>
+    <tr><th>Pozisyon</th>{% for p in players %}<td>{{ p.main_position }}</td>{% endfor %}</tr>
+    <tr><th>Alt pozisyon</th>{% for p in players %}<td>{{ p.sub_position }}</td>{% endfor %}</tr>
+    <tr><th>Kulüp</th>{% for p in players %}<td>{{ p.club or '-' }}</td>{% endfor %}</tr>
+    <tr><th>Lig</th>{% for p in players %}<td>{{ p.league or '-' }}</td>{% endfor %}</tr>
+    <tr><th>Değer</th>{% for p in players %}<td>{{ p.market_value_eur|eur }}</td>{% endfor %}</tr>
+    <tr><th>Gol</th>{% for p in players %}<td>{{ p.goals }}</td>{% endfor %}</tr>
+    <tr><th>Asist</th>{% for p in players %}<td>{{ p.assists }}</td>{% endfor %}</tr>
+  </tbody>
+</table>
+</div>
+<form method="post" action="{{ url_for('compare_save') }}"><button class="btn btn-dark">Karşılaştırmayı kaydet</button></form>
+{% else %}
+<p class="text-muted">Karşılaştırmak için arama sayfasından oyuncu ekle (en fazla 4).</p>
+{% endif %}
+
+<h5 class="mt-4">Kayıtlı karşılaştırmalarım</h5>
+<ul>
+  {% for s in saved %}<li>{{ s.names }} <small class="text-muted">({{ s.created_at.strftime('%d.%m.%Y') }})</small></li>
+  {% else %}<li class="text-muted">Yok.</li>{% endfor %}
+</ul>
+{% endblock %}

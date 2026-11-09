@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card card-body mb-3">
+  <div class="d-flex justify-content-between flex-wrap">
+    <div>
+      <h3>{{ p.name }}</h3>
+      <p class="text-muted mb-1">{{ p.main_position }} / {{ p.sub_position }} · {{ p.club or 'Kulüpsüz' }} · {{ p.league or '-' }}</p>
+    </div>
+    <h3 class="text-success">{{ p.market_value_eur|eur }}</h3>
+  </div>
+  <div class="row text-center my-3">
+    <div class="col"><div class="fs-4">{{ p.age or '-' }}</div><small>Yaş</small></div>
+    <div class="col"><div class="fs-4">{{ p.country or '-' }}</div><small>Ülke</small></div>
+    <div class="col"><div class="fs-4">{{ extra.height_cm or '-' }}</div><small>Boy (cm)</small></div>
+    <div class="col"><div class="fs-4">{{ extra.foot or '-' }}</div><small>Ayak</small></div>
+    <div class="col"><div class="fs-4">{{ p.goals }}</div><small>Gol</small></div>
+    <div class="col"><div class="fs-4">{{ p.assists }}</div><small>Asist</small></div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <form method="post" action="{{ url_for('compare_add', pid=p.player_id) }}">
+      <button class="btn btn-outline-secondary btn-sm">Karşılaştırmaya ekle</button></form>
+    {% if in_list %}
+    <form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn-warning btn-sm">★ Listeden çıkar</button></form>
+    {% else %}
+    <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn-outline-warning btn-sm">☆ İzleme listesine ekle</button></form>
+    {% endif %}
+  </div>
+</div>
+
+{% if session.role == 'admin' %}
+<div class="card card-body mb-3 border-danger">
+  <h6>Admin</h6>
+  <div class="d-flex gap-3 flex-wrap">
+    <form method="post" action="{{ url_for('admin_player_value', pid=p.player_id) }}" class="d-flex gap-2">
+      <input name="value" type="number" step="any" min="0" class="form-control form-control-sm" placeholder="Yeni değer (M€)" required>
+      <button class="btn btn-sm btn-dark">Değeri güncelle</button></form>
+    <form method="post" action="{{ url_for('admin_player_delete', pid=p.player_id) }}"
+          onsubmit="return confirm('Oyuncu silinsin mi?')">
+      <button class="btn btn-sm btn-danger">Oyuncuyu sil</button></form>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card card-body mb-3">
+      <h5>Scout Raporu</h5>
+      <form method="post" action="{{ url_for('add_report', pid=p.player_id) }}">
+        <input name="rating" type="number" min="1" max="10" class="form-control mb-2" placeholder="Puan (1-10)" required>
+        <textarea name="text" class="form-control mb-2" rows="3" placeholder="Rapor metni" required></textarea>
+        <button class="btn btn-dark btn-sm">Raporu kaydet</button>
+      </form>
+      <hr>
+      {% for r in reports %}
+        <div class="mb-2"><b>{{ r.rating }}/10</b> · <small class="text-muted">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small><br>{{ r.report_text }}</div>
+      {% else %}<small class="text-muted">Henüz raporun yok.</small>{% endfor %}
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card card-body mb-3">
+      <h5>Notlarım</h5>
+      <form method="post" action="{{ url_for('add_note', pid=p.player_id) }}" class="d-flex gap-2">
+        <input name="note" class="form-control" placeholder="Kısa not" required>
+        <button class="btn btn-dark btn-sm">Ekle</button>
+      </form>
+      <hr>
+      {% for n in notes %}
+        <div class="mb-2">{{ n.note }} <small class="text-muted">· {{ n.created_at.strftime('%d.%m.%Y') }}</small></div>
+      {% else %}<small class="text-muted">Henüz notun yok.</small>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

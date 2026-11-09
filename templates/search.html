@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+{% macro th(key, label) %}
+  {% set nd = ('desc' if direction == 'asc' else 'asc') if sort == key else defaults[key] %}
+  <th><a class="text-white text-decoration-none" href="{{ url_for('search', **dict(args, sort=key, dir=nd)) }}">{{ label }}
+    {% if sort == key %}{{ '▲' if direction == 'asc' else '▼' }}{% else %}<span class="opacity-50">⇅</span>{% endif %}</a></th>
+{% endmacro %}
+<form method="get" class="card card-body mb-3">
+  <div class="row g-2">
+    <div class="col-md-3"><input name="name" class="form-control" placeholder="Oyuncu adı" value="{{ f.name }}"></div>
+    <div class="col-md-3">
+      <select name="country" class="form-select"><option value="">Tüm ülkeler</option>
+        {% for c in countries %}<option {{ 'selected' if c.country == f.country }}>{{ c.country }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3">
+      <select name="league" class="form-select"><option value="">Tüm ligler</option>
+        {% for l in leagues %}<option {{ 'selected' if l.league == f.league }}>{{ l.league }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-3">
+      <select name="position" class="form-select"><option value="">Tüm pozisyonlar</option>
+        {% for p in positions %}<option {{ 'selected' if p.main_position == f.position }}>{{ p.main_position }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-2"><input name="age_min" type="number" class="form-control" placeholder="Yaş min" value="{{ f.age_min }}"></div>
+    <div class="col-md-2"><input name="age_max" type="number" class="form-control" placeholder="Yaş max" value="{{ f.age_max }}"></div>
+    <div class="col-md-2"><input name="value_min" type="number" step="any" class="form-control" placeholder="Değer min (M€)" value="{{ f.value_min }}"></div>
+    <div class="col-md-2"><input name="value_max" type="number" step="any" class="form-control" placeholder="Değer max (M€)" value="{{ f.value_max }}"></div>
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <input type="hidden" name="dir" value="{{ direction }}">
+    <div class="col-md-2 d-grid"><button class="btn btn-dark">Ara</button></div>
+    <div class="col-md-2 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('search') }}">↺ Sıfırla</a></div>
+  </div>
+</form>
+
+<p class="text-muted">{{ total }} oyuncu bulundu (sayfa {{ page }}/{{ pages }})</p>
+<div class="table-responsive">
+<table class="table table-hover bg-white align-middle">
+  <thead class="table-dark"><tr>
+    {{ th('name', 'Oyuncu') }}{{ th('age', 'Yaş') }}<th>Ülke</th><th>Pozisyon</th><th>Kulüp</th><th>Lig</th>
+    {{ th('value', 'Değer') }}{{ th('goals', 'Gol') }}{{ th('assists', 'Asist') }}<th></th></tr></thead>
+  <tbody>
+  {% for p in players %}
+  <tr>
+    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td>
+    <td>{{ p.sub_position }}</td><td>{{ p.club or '-' }}</td><td>{{ p.league or '-' }}</td>
+    <td>{{ p.market_value_eur|eur }}</td><td>{{ p.goals }}</td><td>{{ p.assists }}</td>
+    <td class="text-nowrap">
+      <form method="post" action="{{ url_for('compare_add', pid=p.player_id) }}" class="d-inline">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button class="btn btn-outline-secondary btn-xs">Karşılaştır</button></form>
+      <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}" class="d-inline">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button class="btn btn-outline-warning btn-xs">★</button></form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="10" class="text-center text-muted">Sonuç bulunamadı.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<nav class="d-flex justify-content-between">
+  {% if page > 1 %}<a class="btn btn-outline-dark" href="{{ url_for('search', **dict(args, page=page-1)) }}">← Önceki</a>{% else %}<span></span>{% endif %}
+  {% if page < pages %}<a class="btn btn-outline-dark" href="{{ url_for('search', **dict(args, page=page+1)) }}">Sonraki →</a>{% endif %}
+</nav>
+{% endblock %}

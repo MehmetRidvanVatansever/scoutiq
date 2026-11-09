@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>İzleme Listem</h4>
+<table class="table table-hover bg-white align-middle">
+  <thead class="table-dark"><tr><th>Oyuncu</th><th>Yaş</th><th>Pozisyon</th><th>Kulüp</th><th>Değer</th><th></th></tr></thead>
+  <tbody>
+  {% for p in players %}
+  <tr>
+    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td>{{ p.age or '-' }}</td><td>{{ p.sub_position }}</td><td>{{ p.club or '-' }}</td>
+    <td>{{ p.market_value_eur|eur }}</td>
+    <td><form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}">
+      <button class="btn btn-outline-danger btn-xs">Çıkar</button></form></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="text-center text-muted">Listen boş. Arama sayfasında ★ ile oyuncu ekle.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

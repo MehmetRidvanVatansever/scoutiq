@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>Admin Paneli</h4>
+<p class="text-muted">{{ stats.players }} oyuncu · {{ stats.users }} kullanıcı · {{ stats.reports }} rapor</p>
+
+<div class="card card-body mb-4">
+  <h5>Oyuncu Ekle</h5>
+  <form method="post" action="{{ url_for('admin_player_add') }}" class="row g-2">
+    <div class="col-md-3"><input name="name" class="form-control" placeholder="Ad" required></div>
+    <div class="col-md-3"><select name="country_id" class="form-select"><option value="">Ülke</option>
+      {% for c in countries %}<option value="{{ c.country_id }}">{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="position_id" class="form-select" required><option value="">Pozisyon</option>
+      {% for p in positions %}<option value="{{ p.position_id }}">{{ p.label }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="club_id" class="form-select"><option value="">Kulüp</option>
+      {% for c in clubs %}<option value="{{ c.club_id }}">{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><input name="dob" type="date" class="form-control"></div>
+    <div class="col-md-3"><input name="value" type="number" step="any" min="0" class="form-control" placeholder="Değer (M€)"></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-dark">Ekle</button></div>
+  </form>
+</div>
+
+<h5>Kullanıcılar</h5>
+<table class="table bg-white align-middle">
+  <thead class="table-dark"><tr><th>ID</th><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Kayıt</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.user_id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td>
+    <td>{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+    <td class="d-flex gap-1">
+      {% if u.user_id != session.user_id %}
+      <form method="post" action="{{ url_for('admin_role', uid=u.user_id) }}">
+        <input type="hidden" name="role" value="{{ 'scout' if u.role == 'admin' else 'admin' }}">
+        <button class="btn btn-outline-dark btn-xs">{{ 'Scout yap' if u.role == 'admin' else 'Admin yap' }}</button></form>
+      <form method="post" action="{{ url_for('admin_user_delete', uid=u.user_id) }}" onsubmit="return confirm('Kullanıcı silinsin mi?')">
+        <button class="btn btn-outline-danger btn-xs">Sil</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h5>Son İşlemler (audit log)</h5>
+<table class="table table-sm bg-white">
+  <thead><tr><th>#</th><th>Kullanıcı</th><th>İşlem</th><th>Tablo</th><th>Kayıt</th><th>Zaman</th></tr></thead>
+  <tbody>
+  {% for l in logs %}
+  <tr><td>{{ l.log_id }}</td><td>{{ l.username or '-' }}</td><td>{{ l.action }}</td><td>{{ l.table_name }}</td>
+      <td>{{ l.record_id }}</td><td>{{ l.created_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+  {% else %}<tr><td colspan="6" class="text-muted">Kayıt yok.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,4 @@
+body { background: #f4f6f9; }
+.navbar-brand { font-weight: 700; letter-spacing: .5px; }
+table td, table th { vertical-align: middle; }
+.btn-xs { padding: .1rem .4rem; font-size: .75rem; }

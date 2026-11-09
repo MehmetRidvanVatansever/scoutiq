@@ -1,0 +1,14 @@
+# Büyük veri dosyaları (Kaggle'dan indirilir)
+data/*.csv
+data/*.csv.gz
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Gizli bilgiler / editör
+.env
+.vscode/
+*.dump

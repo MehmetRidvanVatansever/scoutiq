@@ -2,7 +2,8 @@
 -- Aktif oyuncu = 2024 yılında en az bir maça çıkan oyuncu (players.is_active, scripts/season_data.py hesaplar).
 
 -- View'lar her çalıştırmada silinip yeniden kurulur (sütun eklenebilsin diye).
-DROP VIEW IF EXISTS top_starred_players, club_overview, club_roster, player_overview, player_career CASCADE;
+DROP VIEW IF EXISTS quiz_leaderboard, quiz_pairs, player_clubs, top_starred_players, club_overview, club_roster,
+  player_overview, player_career CASCADE;
 
 -- ===== VIEW 1: oyuncu + ülke + pozisyon + kulüp + lig + gol/asist =====
 CREATE VIEW player_overview AS
@@ -75,3 +76,32 @@ SELECT s.player_id, s.club_id, c.name AS club, s.joined_at, s.left_at, s.season,
        (c.competition_id IS NOT NULL) AS has_league
 FROM stints s
 JOIN clubs c ON c.club_id = s.club_id;
+
+-- ===== VIEW 6: oyuncunun forma giydiği tüm kulüpler (quiz için) =====
+-- Kaynaklar: 2024 kadroları, transferlerin iki ucu ve oyuncunun güncel kulübü. UNION tekrarları ayıklar.
+CREATE VIEW player_clubs AS
+SELECT player_id, club_id FROM club_squads
+UNION
+SELECT player_id, from_club_id FROM transfers
+UNION
+SELECT player_id, to_club_id FROM transfers
+UNION
+SELECT player_id, club_id FROM players WHERE club_id IS NOT NULL;
+
+-- ===== VIEW 7: quiz'de sorulabilecek kulüp çiftleri ve ortak oyuncu sayısı (self-join + GROUP BY) =====
+CREATE VIEW quiz_pairs AS
+WITH pc AS (SELECT * FROM player_clubs WHERE club_id IN (SELECT club_id FROM quiz_clubs))
+SELECT a.club_id AS club_a, b.club_id AS club_b, count(*) AS common_players
+FROM pc a
+JOIN pc b ON b.player_id = a.player_id AND b.club_id > a.club_id
+GROUP BY a.club_id, b.club_id;
+
+-- ===== VIEW 8: quiz lider tablosu – kullanıcının en uzun serisi (GROUP BY + RANK() OVER) =====
+CREATE VIEW quiz_leaderboard AS
+SELECT u.user_id, u.username,
+       max(g.streak) AS best_streak,
+       count(*)      AS games_played,
+       RANK() OVER (ORDER BY max(g.streak) DESC) AS rank
+FROM quiz_games g
+JOIN users u ON u.user_id = g.user_id
+GROUP BY u.user_id, u.username;

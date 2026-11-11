@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>⚽ Club Link Quiz</h4>
+<p class="text-muted">Two big clubs are shown. Name a player who has played for <b>both</b> of them (players in the dataset, roughly 2012 onwards).
+  Every correct answer extends your streak; one wrong answer ends the game. A player can be used only once per game. Small typos are accepted.</p>
+
+<div class="row">
+  <div class="col-lg-8">
+    {% if last %}
+      {% if last.correct %}
+      <div class="alert alert-success py-2">✔ Correct! <b>{{ last.player }}</b> played for {{ last.clubs[0] }} and {{ last.clubs[1] }}. Streak: <b>{{ last.streak }}</b></div>
+      {% else %}
+      <div class="alert alert-danger py-2">
+        ✘ "{{ last.answer or '—' }}" is not accepted for {{ last.clubs[0] }} – {{ last.clubs[1] }}. Game over, final streak: <b>{{ last.streak }}</b>.
+        {% if last.answers %}<br><small>Possible answers: {{ last.answers|join(', ') }}</small>{% endif %}
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {% if game %}
+    <div class="card card-body mb-3 text-center">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="badge text-bg-warning fs-6">Streak: {{ game.streak }}</span>
+        <form method="post" action="{{ url_for('quiz.quiz_quit') }}" data-confirm="End this game? Your streak of {{ game.streak }} will be saved.">
+          <button class="btn btn-outline-secondary btn-sm">End game</button></form>
+      </div>
+      <div class="d-flex justify-content-center align-items-center gap-4 my-3 flex-wrap">
+        <div class="quiz-club">{{ game.club_a }}</div>
+        <div class="fs-3 text-muted">⇄</div>
+        <div class="quiz-club">{{ game.club_b }}</div>
+      </div>
+      <form method="post" action="{{ url_for('quiz.quiz_answer') }}" class="d-flex gap-2 justify-content-center">
+        <input type="hidden" name="round_id" value="{{ game.round_id }}">
+        <input name="answer" class="form-control w-50" placeholder="Player name" autocomplete="off" autofocus required>
+        <button class="btn btn-dark">Answer</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="card card-body mb-3 text-center">
+      <p class="mb-3">{% if me %}Your best streak: <b>{{ me.best_streak }}</b> ({{ me.games_played }} games, rank #{{ me.rank }}){% else %}You haven't played yet.{% endif %}</p>
+      <form method="post" action="{{ url_for('quiz.quiz_start') }}"><button class="btn btn-dark btn-lg">Start new game</button></form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-body mb-3">
+      <h5>🏆 Leaderboard</h5>
+      <table class="table table-sm mb-0">
+        <thead><tr><th>#</th><th>User</th><th>Best streak</th><th>Games</th></tr></thead>
+        <tbody>
+        {% for l in leaders %}
+          <tr{% if l.user_id == session.user_id %} class="table-warning"{% endif %}>
+            <td><b>{{ l.rank }}</b></td><td>{{ l.username }}</td><td>{{ l.best_streak }}</td><td>{{ l.games_played }}</td></tr>
+        {% else %}
+          <tr><td colspan="4" class="text-muted">No games yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

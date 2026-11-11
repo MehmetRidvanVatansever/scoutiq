@@ -20,6 +20,7 @@
       <a class="nav-link" href="{{ url_for('compare.compare') }}">Compare ({{ session.get('cmp', [])|length }})</a>
       <a class="nav-link" href="{{ url_for('watchlist.watchlist') }}">Watchlist</a>
       <a class="nav-link" href="{{ url_for('history.history') }}">Search History</a>
+      <a class="nav-link" href="{{ url_for('quiz.quiz') }}">⚽ Quiz</a>
       {% if session.role == 'admin' %}<a class="nav-link" href="{{ url_for('admin.admin') }}">Admin</a>{% endif %}
     </div>
     <span class="navbar-text me-3">{{ session.username }} ({{ session.role }})</span>

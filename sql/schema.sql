@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS market_values, transfers, club_squads, audit_log, player_notes, search_history, comparison_players,
+DROP TABLE IF EXISTS quiz_rounds, quiz_games, quiz_clubs, market_values, transfers, club_squads, audit_log, player_notes, search_history, comparison_players,
   comparisons, scout_reports, watchlist_players, watchlists, users, roles,
   player_stats, players, clubs, competitions, positions, countries CASCADE;
 

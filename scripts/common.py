@@ -9,8 +9,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)   # db.py proje kökünde
 
-# şemadan sonra sırayla çalıştırılan, tekrar çalıştırılabilir SQL dosyaları
-SETUP_SQL = ["indexes.sql", "views.sql", "triggers.sql", "functions.sql"]
+# şemadan sonra sırayla çalıştırılan, tekrar çalıştırılabilir SQL dosyaları (quiz tabloları view'lardan önce)
+SETUP_SQL = ["quiz.sql", "indexes.sql", "views.sql", "triggers.sql", "functions.sql"]
 
 
 def read_csv(name, cols):

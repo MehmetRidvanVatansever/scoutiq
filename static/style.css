@@ -9,3 +9,7 @@ table td, table th { vertical-align: middle; }
 .value-chart .dot { fill: #198754; cursor: pointer; }
 .value-chart .dot:hover { r: 6; }
 .value-chart .lbl { font-size: 11px; fill: #6c757d; }
+
+/* quiz */
+.quiz-club { min-width: 220px; padding: 1.25rem 1.5rem; border-radius: .75rem; background: #212529; color: #fff;
+             font-size: 1.4rem; font-weight: 600; }

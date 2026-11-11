@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,15 +14,16 @@
     <a class="navbar-brand" href="{{ url_for('search') }}">⚽ ScoutIQ</a>
     {% if session.user_id %}
     <div class="navbar-nav me-auto">
-      <a class="nav-link" href="{{ url_for('search') }}">Arama</a>
-      <a class="nav-link" href="{{ url_for('clubs') }}">Kulüpler</a>
-      <a class="nav-link" href="{{ url_for('top_starred') }}">★ En Çok Yıldızlananlar</a>
-      <a class="nav-link" href="{{ url_for('compare') }}">Karşılaştır ({{ session.get('cmp', [])|length }})</a>
-      <a class="nav-link" href="{{ url_for('watchlist') }}">İzleme Listesi</a>
+      <a class="nav-link" href="{{ url_for('search') }}">Search</a>
+      <a class="nav-link" href="{{ url_for('clubs') }}">Clubs</a>
+      <a class="nav-link" href="{{ url_for('top_starred') }}">★ Most Starred</a>
+      <a class="nav-link" href="{{ url_for('compare') }}">Compare ({{ session.get('cmp', [])|length }})</a>
+      <a class="nav-link" href="{{ url_for('watchlist') }}">Watchlist</a>
+      <a class="nav-link" href="{{ url_for('history') }}">Search History</a>
       {% if session.role == 'admin' %}<a class="nav-link" href="{{ url_for('admin') }}">Admin</a>{% endif %}
     </div>
     <span class="navbar-text me-3">{{ session.username }} ({{ session.role }})</span>
-    <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Çıkış</a>
+    <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Log out</a>
     {% endif %}
   </div>
 </nav>
@@ -37,20 +38,20 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">⚠️ Onay gerekiyor</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        <h5 class="modal-title">⚠️ Confirmation required</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="confirmText"></div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
-        <button type="button" class="btn btn-danger" id="confirmOk">Evet, sil</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Yes, delete</button>
       </div>
     </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// data-confirm="mesaj" olan her form, gönderilmeden önce bu kutuyla onay ister
+// every form with data-confirm="message" asks for confirmation in this dialog before submitting
 document.addEventListener("submit", function (e) {
   var form = e.target, msg = form.dataset.confirm;
   if (!msg) return;

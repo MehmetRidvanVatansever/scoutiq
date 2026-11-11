@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-{% from "_macros.html" import star with context %}
-<h4>★ En Çok Yıldızlanan Oyuncular</h4>
-<p class="text-muted">Scout'ların izleme listesine en çok eklediği ilk 25 oyuncu. Aynı sayıya sahip oyuncular aynı sırayı paylaşır.</p>
+{% from "_macros.html" import star, th with context %}
+<h4>★ Most Starred Players</h4>
+<p class="text-muted">The top 25 players most often added to scouts' watchlists. Players with the same count share the same rank.</p>
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
-  <thead class="table-dark"><tr><th>#</th><th>Oyuncu</th><th>Yaş</th><th>Pozisyon</th><th>Kulüp</th><th>Değer</th><th>★ Sayısı</th><th></th></tr></thead>
+  <thead class="table-dark"><tr><th>#</th>{{ th('name', 'Player', 'top_starred') }}{{ th('age', 'Age', 'top_starred') }}<th>Position</th><th>Club</th>
+    {{ th('value', 'Value', 'top_starred') }}{{ th('stars', '★ Count', 'top_starred') }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
@@ -18,7 +19,7 @@
     <td>{{ star(p, fav) }}</td>
   </tr>
   {% else %}
-  <tr><td colspan="8" class="text-center text-muted">Henüz hiçbir oyuncu yıldızlanmamış.</td></tr>
+  <tr><td colspan="8" class="text-center text-muted">No players have been starred yet.</td></tr>
   {% endfor %}
   </tbody>
 </table>

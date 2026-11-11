@@ -6,6 +6,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 from db import get_db
 import season_data
+import history_data
 
 
 def read(name, cols):
@@ -25,6 +26,8 @@ players = read("players", ["player_id", "name", "country_of_citizenship", "date_
 clubs = read("clubs", ["club_id", "name", "domestic_competition_id"])
 comps = read("competitions", ["competition_id", "name", "country_name"])
 apps = read("appearances", ["player_id", "player_club_id", "date", "goals", "assists"])
+vals = read("player_valuations", history_data.VALUE_COLS)
+trs = read("transfers", history_data.TRANSFER_COLS)
 
 # countries
 names = pd.concat([comps.country_name, players.country_of_citizenship]).dropna().drop_duplicates().sort_values()
@@ -68,6 +71,11 @@ players = players[["player_id", "name", "country_id", "position_id", "club_id",
 stats = apps.groupby("player_id")[["goals", "assists"]].sum().reset_index()
 stats = players[["player_id"]].merge(stats, how="left").fillna(0).astype(int)
 
+# değer geçmişi + transferler (transferlerde geçen eksik kulüpler ligsiz olarak eklenir)
+market_values, transfers, extra_clubs = history_data.build(vals, trs, players.player_id, clubs.club_id)
+clubs = pd.concat([clubs, extra_clubs], ignore_index=True)
+clubs["club_id"] = clubs.club_id.astype(int)
+
 conn = get_db()
 cur = conn.cursor()
 cur.execute(open(os.path.join(ROOT, "sql", "schema.sql"), encoding="utf-8").read())
@@ -78,11 +86,16 @@ load(cur, "clubs", clubs)
 load(cur, "players", players)
 load(cur, "player_stats", stats)
 load(cur, "club_squads", squads)
+load(cur, "market_values", market_values)
+load(cur, "transfers", transfers)
 cur.execute("SELECT setval(pg_get_serial_sequence('countries','country_id'), (SELECT max(country_id) FROM countries))")
 cur.execute("SELECT setval(pg_get_serial_sequence('positions','position_id'), (SELECT max(position_id) FROM positions))")
 cur.execute(open(os.path.join(ROOT, "sql", "indexes_views.sql"), encoding="utf-8").read())
+cur.execute(open(os.path.join(ROOT, "sql", "triggers.sql"), encoding="utf-8").read())
+cur.execute(open(os.path.join(ROOT, "sql", "functions.sql"), encoding="utf-8").read())
 conn.commit()
-for t in ["countries", "positions", "competitions", "clubs", "players", "player_stats", "club_squads"]:
+for t in ["countries", "positions", "competitions", "clubs", "players", "player_stats", "club_squads",
+          "market_values", "transfers"]:
     cur.execute(f"SELECT count(*) FROM {t}")
     print(t, cur.fetchone()[0])
 cur.execute("SELECT count(*) FROM players WHERE is_active")

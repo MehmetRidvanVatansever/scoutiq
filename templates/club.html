@@ -1,39 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
 {% from "_macros.html" import star, th with context %}
-<a href="{{ url_for('clubs') }}">← Kulüplere dön</a>
+<a href="{{ url_for('clubs') }}">← Back to clubs</a>
 <div class="card card-body my-3">
   <h3>{{ c.name }}</h3>
-  <p class="text-muted mb-2">{{ c.league or '-' }} · {{ c.country or '-' }} · 2024 yılında bu kulüp adına maça çıkanlar</p>
+  <p class="text-muted mb-2">{{ c.league or '-' }} · {{ c.country or '-' }} · players who appeared for this club in 2024</p>
   <div class="row text-center">
-    <div class="col"><div class="fs-4">{{ c.player_count }}</div><small>Oyuncu</small></div>
-    <div class="col"><div class="fs-4">{{ c.total_value|eur }}</div><small>Toplam değer</small></div>
-    <div class="col"><div class="fs-4">{{ c.avg_age or '-' }}</div><small>Ortalama yaş</small></div>
+    <div class="col"><div class="fs-4">{{ c.player_count }}</div><small>Players</small></div>
+    <div class="col"><div class="fs-4">{{ c.total_value|eur }}</div><small>Total value</small></div>
+    <div class="col"><div class="fs-4">{{ c.avg_age or '-' }}</div><small>Average age</small></div>
   </div>
 </div>
 
 <form method="get" class="card card-body mb-3">
   <div class="row g-2">
-    <div class="col-md-4"><input name="name" class="form-control" placeholder="Oyuncu adı" value="{{ f.name }}"></div>
-    <div class="col-md-2"><select name="position" class="form-select"><option value="">Tüm pozisyonlar</option>
+    <div class="col-md-4"><input name="name" class="form-control" placeholder="Player name" value="{{ f.name }}"></div>
+    <div class="col-md-2"><select name="position" class="form-select"><option value="">All positions</option>
       {% for p in positions %}<option {{ 'selected' if p.main_position == f.position }}>{{ p.main_position }}</option>{% endfor %}</select></div>
-    <div class="col-md-1"><input name="age_min" type="number" class="form-control" placeholder="Yaş min" value="{{ f.age_min }}"></div>
-    <div class="col-md-1"><input name="age_max" type="number" class="form-control" placeholder="Yaş max" value="{{ f.age_max }}"></div>
+    <div class="col-md-1"><input name="age_min" type="number" class="form-control" placeholder="Min age" value="{{ f.age_min }}"></div>
+    <div class="col-md-1"><input name="age_max" type="number" class="form-control" placeholder="Max age" value="{{ f.age_max }}"></div>
     <div class="col-md-1"><input name="value_min" type="number" step="any" class="form-control" placeholder="M€ min" value="{{ f.value_min }}"></div>
     <div class="col-md-1"><input name="value_max" type="number" step="any" class="form-control" placeholder="M€ max" value="{{ f.value_max }}"></div>
     <input type="hidden" name="sort" value="{{ sort }}">
     <input type="hidden" name="dir" value="{{ direction }}">
-    <div class="col-md-1 d-grid"><button class="btn btn-dark">Ara</button></div>
+    <div class="col-md-1 d-grid"><button class="btn btn-dark">Search</button></div>
     <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('club', cid=c.club_id) }}">↺</a></div>
   </div>
 </form>
 
-<p class="text-muted">{{ players|length }} oyuncu listeleniyor</p>
+<p class="text-muted">{{ players|length }} players listed</p>
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
   <thead class="table-dark"><tr>
-    {{ th('name', 'Oyuncu', 'club', {'cid': c.club_id}) }}{{ th('age', 'Yaş', 'club', {'cid': c.club_id}) }}<th>Ülke</th><th>Pozisyon</th>
-    {{ th('value', 'Değer', 'club', {'cid': c.club_id}) }}{{ th('goals', 'Gol', 'club', {'cid': c.club_id}) }}{{ th('assists', 'Asist', 'club', {'cid': c.club_id}) }}<th></th></tr></thead>
+    {{ th('name', 'Player', 'club', {'cid': c.club_id}) }}{{ th('age', 'Age', 'club', {'cid': c.club_id}) }}<th>Country</th><th>Position</th>
+    {{ th('value', 'Value', 'club', {'cid': c.club_id}) }}{{ th('goals', 'Goals', 'club', {'cid': c.club_id}) }}{{ th('assists', 'Assists', 'club', {'cid': c.club_id}) }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
@@ -43,7 +43,7 @@
     <td>{{ star(p, fav) }}</td>
   </tr>
   {% else %}
-  <tr><td colspan="8" class="text-center text-muted">Bu kriterlere uyan oyuncu yok.</td></tr>
+  <tr><td colspan="8" class="text-center text-muted">No players match these criteria.</td></tr>
   {% endfor %}
   </tbody>
 </table>

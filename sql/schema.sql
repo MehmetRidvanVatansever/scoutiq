@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS club_squads, audit_log, player_notes, search_history, comparison_players,
+DROP TABLE IF EXISTS market_values, transfers, club_squads, audit_log, player_notes, search_history, comparison_players,
   comparisons, scout_reports, watchlist_players, watchlists, users, roles,
   player_stats, players, clubs, competitions, positions, countries CASCADE;
 
@@ -53,6 +53,30 @@ CREATE TABLE club_squads (
   play_year       INT NOT NULL,
   matches_played  INT NOT NULL CHECK (matches_played > 0),
   PRIMARY KEY (club_id, player_id, play_year)
+);
+
+-- Piyasa değeri geçmişi: oyuncunun farklı tarihlerdeki değerlemeleri
+CREATE TABLE market_values (
+  value_id          SERIAL PRIMARY KEY,
+  player_id         INT NOT NULL REFERENCES players(player_id) ON DELETE CASCADE,
+  valued_at         DATE NOT NULL,
+  market_value_eur  BIGINT NOT NULL CHECK (market_value_eur >= 0),
+  club_id           INT REFERENCES clubs(club_id) ON DELETE SET NULL,   -- değerleme anındaki kulüp
+  UNIQUE (player_id, valued_at)
+);
+
+-- Transferler: oyuncunun kulüpten kulübe geçişleri (önceki takımlar buradan çıkarılır)
+CREATE TABLE transfers (
+  transfer_id       SERIAL PRIMARY KEY,
+  player_id         INT NOT NULL REFERENCES players(player_id) ON DELETE CASCADE,
+  transfer_date     DATE NOT NULL,
+  season            VARCHAR(10),
+  from_club_id      INT NOT NULL REFERENCES clubs(club_id),
+  to_club_id        INT NOT NULL REFERENCES clubs(club_id),
+  fee_eur           BIGINT CHECK (fee_eur >= 0),            -- NULL: bilinmiyor, 0: bedelsiz
+  market_value_eur  BIGINT CHECK (market_value_eur >= 0),   -- transfer anındaki değer
+  CHECK (from_club_id <> to_club_id),
+  UNIQUE (player_id, transfer_date, from_club_id, to_club_id)
 );
 
 -- ===== SISTEM TABLOLARI =====

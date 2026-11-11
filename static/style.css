@@ -2,3 +2,10 @@ body { background: #f4f6f9; }
 .navbar-brand { font-weight: 700; letter-spacing: .5px; }
 table td, table th { vertical-align: middle; }
 .btn-xs { padding: .1rem .4rem; font-size: .75rem; }
+/* piyasa değeri grafiği */
+.value-chart .axis { stroke: #adb5bd; stroke-width: 1; }
+.value-chart .grid { stroke: #dee2e6; stroke-dasharray: 4 4; }
+.value-chart .line { fill: none; stroke: #198754; stroke-width: 2; stroke-linejoin: round; }
+.value-chart .dot { fill: #198754; cursor: pointer; }
+.value-chart .dot:hover { r: 6; }
+.value-chart .lbl { font-size: 11px; fill: #6c757d; }

@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<h4>Kulüpler</h4>
+<h4>Clubs</h4>
 <form method="get" class="card card-body mb-3">
   <div class="row g-2">
-    <div class="col-md-5"><input name="name" class="form-control" placeholder="Takım adı" value="{{ name }}"></div>
-    <div class="col-md-4"><select name="league" class="form-select"><option value="">Tüm ligler</option>
+    <div class="col-md-5"><input name="name" class="form-control" placeholder="Club name" value="{{ name }}"></div>
+    <div class="col-md-4"><select name="league" class="form-select"><option value="">All leagues</option>
       {% for l in leagues %}<option {{ 'selected' if l.league == league }}>{{ l.league }}</option>{% endfor %}</select></div>
-    <div class="col-md-2 d-grid"><button class="btn btn-dark">Ara</button></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-dark">Search</button></div>
     <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('clubs') }}">↺</a></div>
   </div>
 </form>
-<p class="text-muted">{{ total }} kulüp bulundu{% if total > 50 %} (ilk 50 gösteriliyor, aramayı daraltın){% endif %}</p>
+<p class="text-muted">{{ total }} clubs found{% if total > 50 %} (showing first 50, narrow your search){% endif %}</p>
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
-  <thead class="table-dark"><tr><th>Kulüp</th><th>Lig</th><th>Ülke</th><th>Oyuncu sayısı</th><th>Toplam değer</th><th>Ort. yaş</th></tr></thead>
+  <thead class="table-dark"><tr><th>Club</th><th>League</th><th>Country</th><th>Players</th><th>Total value</th><th>Avg. age</th></tr></thead>
   <tbody>
   {% for c in clubs %}
   <tr>
@@ -22,7 +22,7 @@
     <td>{{ c.player_count }}</td><td>{{ c.total_value|eur }}</td><td>{{ c.avg_age or '-' }}</td>
   </tr>
   {% else %}
-  <tr><td colspan="6" class="text-center text-muted">Kulüp bulunamadı.</td></tr>
+  <tr><td colspan="6" class="text-center text-muted">No clubs found.</td></tr>
   {% endfor %}
   </tbody>
 </table>

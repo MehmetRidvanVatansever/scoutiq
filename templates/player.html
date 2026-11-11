@@ -4,29 +4,29 @@
   <div class="d-flex justify-content-between flex-wrap">
     <div>
       <h3>{{ p.name }}</h3>
-      <p class="text-muted mb-1">{{ p.main_position }} / {{ p.sub_position }} · {% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}Kulüpsüz{% endif %} · {{ p.league or '-' }}</p>
+      <p class="text-muted mb-1">{{ p.main_position }} / {{ p.sub_position }} · {% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}No club{% endif %} · {{ p.league or '-' }}</p>
     </div>
     <h3 class="text-success">{{ p.market_value_eur|eur }}</h3>
   </div>
   <div class="row text-center my-3">
-    <div class="col"><div class="fs-4">{{ p.age or '-' }}</div><small>Yaş</small></div>
-    <div class="col"><div class="fs-4">{{ p.country or '-' }}</div><small>Ülke</small></div>
-    <div class="col"><div class="fs-4">{{ extra.height_cm or '-' }}</div><small>Boy (cm)</small></div>
-    <div class="col"><div class="fs-4">{{ extra.foot or '-' }}</div><small>Ayak</small></div>
-    <div class="col"><div class="fs-4">{{ p.goals }}</div><small>Gol</small></div>
-    <div class="col"><div class="fs-4">{{ p.assists }}</div><small>Asist</small></div>
+    <div class="col"><div class="fs-4">{{ p.age or '-' }}</div><small>Age</small></div>
+    <div class="col"><div class="fs-4">{{ p.country or '-' }}</div><small>Country</small></div>
+    <div class="col"><div class="fs-4">{{ extra.height_cm or '-' }}</div><small>Height (cm)</small></div>
+    <div class="col"><div class="fs-4">{{ extra.foot or '-' }}</div><small>Foot</small></div>
+    <div class="col"><div class="fs-4">{{ p.goals }}</div><small>Goals</small></div>
+    <div class="col"><div class="fs-4">{{ p.assists }}</div><small>Assists</small></div>
   </div>
   <div class="d-flex gap-2 flex-wrap">
     <form method="post" action="{{ url_for('compare_add', pid=p.player_id) }}">
-      <button class="btn btn-outline-secondary btn-sm">Karşılaştırmaya ekle</button></form>
+      <button class="btn btn-outline-secondary btn-sm">Add to comparison</button></form>
     {% if in_list %}
     <form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}">
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button class="btn btn-warning btn-sm">★ Listeden çıkar</button></form>
+      <button class="btn btn-warning btn-sm">★ Remove from list</button></form>
     {% else %}
     <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}">
       <input type="hidden" name="next" value="{{ request.path }}">
-      <button class="btn btn-outline-warning btn-sm">☆ İzleme listesine ekle</button></form>
+      <button class="btn btn-outline-warning btn-sm">☆ Add to watchlist</button></form>
     {% endif %}
   </div>
 </div>
@@ -36,42 +36,121 @@
   <h6>Admin</h6>
   <div class="d-flex gap-3 flex-wrap">
     <form method="post" action="{{ url_for('admin_player_value', pid=p.player_id) }}" class="d-flex gap-2">
-      <input name="value" type="number" step="any" min="0" class="form-control form-control-sm" placeholder="Yeni değer (M€)" required>
-      <button class="btn btn-sm btn-dark">Değeri güncelle</button></form>
-    <a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin_player_edit', pid=p.player_id) }}">Tüm bilgileri düzenle</a>
+      <input name="value" type="number" step="any" min="0" class="form-control form-control-sm" placeholder="New value (M€)" required>
+      <button class="btn btn-sm btn-dark">Update value</button></form>
+    <a class="btn btn-sm btn-outline-dark" href="{{ url_for('admin_player_edit', pid=p.player_id) }}">Edit all details</a>
     <form method="post" action="{{ url_for('admin_player_delete', pid=p.player_id) }}"
-          data-confirm="{{ p.name }} adlı oyuncu silinsin mi? Bu işlem geri alınamaz.">
-      <button class="btn btn-sm btn-danger">Oyuncuyu sil</button></form>
+          data-confirm="{{ p.name }} will be deleted. This cannot be undone. Continue?">
+      <button class="btn btn-sm btn-danger">Delete player</button></form>
   </div>
 </div>
 {% endif %}
 
 <div class="row">
+  <div class="col-lg-7">
+    <div class="card card-body mb-3">
+      <div class="d-flex justify-content-between align-items-baseline flex-wrap">
+        <h5>Market Value History</h5>
+        {% if peak %}<small class="text-muted">Peak: <b>{{ peak.market_value_eur|eur }}</b> ({{ peak.valued_at.strftime('%m.%Y') }})</small>{% endif %}
+      </div>
+      {% if chart %}
+      <svg viewBox="0 0 {{ chart.w }} {{ chart.h }}" class="w-100 value-chart" role="img" aria-label="Market value chart">
+        <line x1="{{ chart.pad }}" y1="{{ chart.h - chart.pad }}" x2="{{ chart.w - chart.pad }}" y2="{{ chart.h - chart.pad }}" class="axis"/>
+        <line x1="{{ chart.pad }}" y1="{{ chart.pad }}" x2="{{ chart.w - chart.pad }}" y2="{{ chart.pad }}" class="grid"/>
+        <text x="{{ chart.pad }}" y="{{ chart.pad - 8 }}" class="lbl">{{ chart.max }}</text>
+        {% for t in chart.ticks %}<text x="{{ t.x }}" y="{{ chart.h - chart.pad + 16 }}" text-anchor="middle" class="lbl">{{ t.year }}</text>{% endfor %}
+        <polyline points="{{ chart.line }}" class="line"/>
+        {% for pt in chart.points %}<circle cx="{{ pt.x }}" cy="{{ pt.y }}" r="3.5" class="dot"><title>{{ pt.label }}</title></circle>{% endfor %}
+      </svg>
+      {% elif values %}
+        <small class="text-muted">Only one valuation: {{ values[0].market_value_eur|eur }} ({{ values[0].valued_at.strftime('%d.%m.%Y') }})</small>
+      {% else %}<small class="text-muted">No value history.</small>{% endif %}
+      {% if values %}
+      <details class="mt-2"><summary class="small">All valuations ({{ values|length }})</summary>
+        <table class="table table-sm small mt-2 mb-0">
+          <thead><tr><th>Date</th><th>Value</th><th>Club</th></tr></thead>
+          <tbody>{% for v in values|reverse %}<tr><td>{{ v.valued_at.strftime('%d.%m.%Y') }}</td><td>{{ v.market_value_eur|eur }}</td><td>{{ v.club or '-' }}</td></tr>{% endfor %}</tbody>
+        </table>
+      </details>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card card-body mb-3">
+      <h5>Career / Previous Clubs</h5>
+      {% if career %}
+      <table class="table table-sm small mb-0">
+        <thead><tr><th>Club</th><th>Joined</th><th>Left</th><th>Fee</th></tr></thead>
+        <tbody>
+        {% for c in career %}
+          <tr{% if not c.left_at %} class="table-success"{% endif %}>
+            <td>{% if c.has_league %}<a href="{{ url_for('club', cid=c.club_id) }}">{{ c.club }}</a>{% else %}{{ c.club }}{% endif %}</td>
+            <td>{{ c.joined_at.strftime('%m.%Y') if c.joined_at else '-' }}</td>
+            <td>{{ c.left_at.strftime('%m.%Y') if c.left_at else 'Present' }}</td>
+            <td>{% if c.fee_eur is none %}-{% elif c.fee_eur == 0 %}Free{% else %}{{ c.fee_eur|eur }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}<small class="text-muted">No transfer records.</small>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row">
   <div class="col-md-6">
     <div class="card card-body mb-3">
-      <h5>Scout Raporu</h5>
+      <h5>Scout Report</h5>
       <form method="post" action="{{ url_for('add_report', pid=p.player_id) }}">
-        <input name="rating" type="number" min="1" max="10" class="form-control mb-2" placeholder="Puan (1-10)" required>
-        <textarea name="text" class="form-control mb-2" rows="3" placeholder="Rapor metni" required></textarea>
-        <button class="btn btn-dark btn-sm">Raporu kaydet</button>
+        <input name="rating" type="number" min="1" max="10" class="form-control mb-2" placeholder="Rating (1-10)" required>
+        <textarea name="text" class="form-control mb-2" rows="3" placeholder="Report text" required></textarea>
+        <button class="btn btn-dark btn-sm">Save report</button>
       </form>
       <hr>
       {% for r in reports %}
-        <div class="mb-2"><b>{{ r.rating }}/10</b> · <small class="text-muted">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small><br>{{ r.report_text }}</div>
-      {% else %}<small class="text-muted">Henüz raporun yok.</small>{% endfor %}
+        <div class="mb-2 border-bottom pb-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><b>{{ r.rating }}/10</b> · <small class="text-muted">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</small></div>
+            <form method="post" action="{{ url_for('delete_report', rid=r.report_id) }}" data-confirm="Delete this report?">
+              <button class="btn btn-link btn-sm text-danger p-0">Delete</button></form>
+          </div>
+          <div style="white-space: pre-line">{{ r.report_text }}</div>
+          <details class="mt-1"><summary class="small text-muted">Edit</summary>
+            <form method="post" action="{{ url_for('edit_report', rid=r.report_id) }}" class="mt-2">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <input name="rating" type="number" min="1" max="10" class="form-control form-control-sm mb-2" value="{{ r.rating }}" required>
+              <textarea name="text" class="form-control form-control-sm mb-2" rows="3" required>{{ r.report_text }}</textarea>
+              <button class="btn btn-dark btn-sm">Save</button>
+            </form>
+          </details>
+        </div>
+      {% else %}<small class="text-muted">You haven't written a report yet.</small>{% endfor %}
     </div>
   </div>
   <div class="col-md-6">
     <div class="card card-body mb-3">
-      <h5>Notlarım</h5>
+      <h5>My Notes</h5>
       <form method="post" action="{{ url_for('add_note', pid=p.player_id) }}" class="d-flex gap-2">
-        <input name="note" class="form-control" placeholder="Kısa not" required>
-        <button class="btn btn-dark btn-sm">Ekle</button>
+        <input name="note" class="form-control" placeholder="Short note" required>
+        <button class="btn btn-dark btn-sm">Add</button>
       </form>
       <hr>
       {% for n in notes %}
-        <div class="mb-2">{{ n.note }} <small class="text-muted">· {{ n.created_at.strftime('%d.%m.%Y') }}</small></div>
-      {% else %}<small class="text-muted">Henüz notun yok.</small>{% endfor %}
+        <div class="mb-2 border-bottom pb-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>{{ n.note }} <small class="text-muted">· {{ n.created_at.strftime('%d.%m.%Y') }}</small></div>
+            <form method="post" action="{{ url_for('delete_note', nid=n.note_id) }}" data-confirm="Delete this note?">
+              <button class="btn btn-link btn-sm text-danger p-0">Delete</button></form>
+          </div>
+          <details class="mt-1"><summary class="small text-muted">Edit</summary>
+            <form method="post" action="{{ url_for('edit_note', nid=n.note_id) }}" class="d-flex gap-2 mt-2">
+              <input type="hidden" name="next" value="{{ request.path }}">
+              <input name="note" class="form-control form-control-sm" value="{{ n.note }}" required>
+              <button class="btn btn-dark btn-sm">Save</button>
+            </form>
+          </details>
+        </div>
+      {% else %}<small class="text-muted">You haven't added a note yet.</small>{% endfor %}
     </div>
   </div>
 </div>

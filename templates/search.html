@@ -23,7 +23,7 @@
     <input type="hidden" name="sort" value="{{ sort }}">
     <input type="hidden" name="dir" value="{{ direction }}">
     <div class="col-md-2 d-grid"><button class="btn btn-dark">Search</button></div>
-    <div class="col-md-2 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('search') }}">↺ Reset</a></div>
+    <div class="col-md-2 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('players.search') }}">↺ Reset</a></div>
   </div>
 </form>
 
@@ -31,17 +31,17 @@
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
   <thead class="table-dark"><tr>
-    {{ th('name', 'Player', 'search') }}{{ th('age', 'Age', 'search') }}<th>Country</th><th>Position</th><th>Club</th><th>League</th>
-    {{ th('value', 'Value', 'search') }}{{ th('goals', 'Goals', 'search') }}{{ th('assists', 'Assists', 'search') }}<th></th></tr></thead>
+    {{ th('name', 'Player', 'players.search') }}{{ th('age', 'Age', 'players.search') }}<th>Country</th><th>Position</th><th>Club</th><th>League</th>
+    {{ th('value', 'Value', 'players.search') }}{{ th('goals', 'Goals', 'players.search') }}{{ th('assists', 'Assists', 'players.search') }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
-    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td><a href="{{ url_for('players.player', pid=p.player_id) }}">{{ p.name }}</a></td>
     <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td>
-    <td>{{ p.sub_position }}</td><td>{% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td><td>{{ p.league or '-' }}</td>
+    <td>{{ p.sub_position }}</td><td>{% if p.club_id %}<a href="{{ url_for('clubs.club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td><td>{{ p.league or '-' }}</td>
     <td>{{ p.market_value_eur|eur }}</td><td>{{ p.goals }}</td><td>{{ p.assists }}</td>
     <td class="text-nowrap">
-      <form method="post" action="{{ url_for('compare_add', pid=p.player_id) }}" class="d-inline">
+      <form method="post" action="{{ url_for('compare.compare_add', pid=p.player_id) }}" class="d-inline">
         <input type="hidden" name="next" value="{{ request.full_path }}">
         <button class="btn btn-outline-secondary btn-xs">Compare</button></form>
       {{ star(p, fav) }}
@@ -55,7 +55,7 @@
 </div>
 
 <nav class="d-flex justify-content-between">
-  {% if page > 1 %}<a class="btn btn-outline-dark" href="{{ url_for('search', **dict(args, page=page-1)) }}">← Previous</a>{% else %}<span></span>{% endif %}
-  {% if page < pages %}<a class="btn btn-outline-dark" href="{{ url_for('search', **dict(args, page=page+1)) }}">Next →</a>{% endif %}
+  {% if page > 1 %}<a class="btn btn-outline-dark" href="{{ url_for('players.search', **dict(args, page=page-1)) }}">← Previous</a>{% else %}<span></span>{% endif %}
+  {% if page < pages %}<a class="btn btn-outline-dark" href="{{ url_for('players.search', **dict(args, page=page+1)) }}">Next →</a>{% endif %}
 </nav>
 {% endblock %}

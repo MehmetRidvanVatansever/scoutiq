@@ -1,0 +1,22 @@
+{# Kullanıcı listesi: rol değiştirme ve silme #}
+<h5>Users</h5>
+<table class="table bg-white align-middle">
+  <thead class="table-dark"><tr><th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Registered</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.user_id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td>
+    <td>{{ u.created_at.strftime('%d.%m.%Y') }}</td>
+    <td class="d-flex gap-1">
+      {% if u.user_id != session.user_id %}
+      <form method="post" action="{{ url_for('admin.admin_role', uid=u.user_id) }}">
+        <input type="hidden" name="role" value="{{ 'scout' if u.role == 'admin' else 'admin' }}">
+        <button class="btn btn-outline-dark btn-xs">{{ 'Make scout' if u.role == 'admin' else 'Make admin' }}</button></form>
+      <form method="post" action="{{ url_for('admin.admin_user_delete', uid=u.user_id) }}" data-confirm="{{ u.username }} and all of their records will be deleted. This cannot be undone. Continue?">
+        <button class="btn btn-outline-danger btn-xs">Delete</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>

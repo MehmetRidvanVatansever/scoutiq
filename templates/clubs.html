@@ -7,7 +7,7 @@
     <div class="col-md-4"><select name="league" class="form-select"><option value="">All leagues</option>
       {% for l in leagues %}<option {{ 'selected' if l.league == league }}>{{ l.league }}</option>{% endfor %}</select></div>
     <div class="col-md-2 d-grid"><button class="btn btn-dark">Search</button></div>
-    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('clubs') }}">↺</a></div>
+    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('clubs.clubs') }}">↺</a></div>
   </div>
 </form>
 <p class="text-muted">{{ total }} clubs found{% if total > 50 %} (showing first 50, narrow your search){% endif %}</p>
@@ -17,7 +17,7 @@
   <tbody>
   {% for c in clubs %}
   <tr>
-    <td><a href="{{ url_for('club', cid=c.club_id) }}">{{ c.name }}</a></td>
+    <td><a href="{{ url_for('clubs.club', cid=c.club_id) }}">{{ c.name }}</a></td>
     <td>{{ c.league or '-' }}</td><td>{{ c.country or '-' }}</td>
     <td>{{ c.player_count }}</td><td>{{ c.total_value|eur }}</td><td>{{ c.avg_age or '-' }}</td>
   </tr>

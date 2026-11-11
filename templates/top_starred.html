@@ -5,15 +5,15 @@
 <p class="text-muted">The top 25 players most often added to scouts' watchlists. Players with the same count share the same rank.</p>
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
-  <thead class="table-dark"><tr><th>#</th>{{ th('name', 'Player', 'top_starred') }}{{ th('age', 'Age', 'top_starred') }}<th>Position</th><th>Club</th>
-    {{ th('value', 'Value', 'top_starred') }}{{ th('stars', '★ Count', 'top_starred') }}<th></th></tr></thead>
+  <thead class="table-dark"><tr><th>#</th>{{ th('name', 'Player', 'watchlist.top_starred') }}{{ th('age', 'Age', 'watchlist.top_starred') }}<th>Position</th><th>Club</th>
+    {{ th('value', 'Value', 'watchlist.top_starred') }}{{ th('stars', '★ Count', 'watchlist.top_starred') }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
     <td><b>{{ p.rank }}</b></td>
-    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td><a href="{{ url_for('players.player', pid=p.player_id) }}">{{ p.name }}</a></td>
     <td>{{ p.age or '-' }}</td><td>{{ p.sub_position }}</td>
-    <td>{% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td>
+    <td>{% if p.club_id %}<a href="{{ url_for('clubs.club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td>
     <td>{{ p.market_value_eur|eur }}</td>
     <td><span class="badge text-bg-warning fs-6">★ {{ p.star_count }}</span></td>
     <td>{{ star(p, fav) }}</td>

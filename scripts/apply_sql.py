@@ -1,16 +1,17 @@
-"""Bir .sql dosyasını mevcut veritabanına uygular (veriler silinmez).
-Kullanım:  python scripts\\apply_sql.py sql\\indexes_views.sql
+"""SQL dosyalarını mevcut veritabanına uygular (veriler silinmez).
+Kullanım:
+  python scripts/apply_sql.py                 → indexes, views, triggers, functions (hepsi, sırayla)
+  python scripts/apply_sql.py sql/views.sql   → yalnızca verilen dosya(lar)
 """
-import os, sys
+import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
+from common import SETUP_SQL, run_sql
 from db import get_db
 
-path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "sql", "indexes_views.sql")
+files = sys.argv[1:] or SETUP_SQL
 conn = get_db()
 cur = conn.cursor()
-cur.execute(open(path, encoding="utf-8").read())
+for f in files:
+    print("Uygulandı:", run_sql(cur, f))
 conn.commit()
 conn.close()
-print("Uygulandı:", path)

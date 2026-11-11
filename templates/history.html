@@ -3,7 +3,7 @@
 <div class="d-flex justify-content-between align-items-center mb-2">
   <h4 class="mb-0">My Search History</h4>
   {% if rows %}
-  <form method="post" action="{{ url_for('history_clear') }}" data-confirm="Delete your entire search history?">
+  <form method="post" action="{{ url_for('history.history_clear') }}" data-confirm="Delete your entire search history?">
     <button class="btn btn-outline-danger btn-sm">Clear all</button></form>
   {% endif %}
 </div>
@@ -16,8 +16,8 @@
     <td class="text-nowrap">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
     <td>{% for k, v in r.filters.items() %}<span class="badge text-bg-light border me-1">{{ labels[k] }}: {{ v }}</span>{% endfor %}</td>
     <td class="text-end text-nowrap">
-      <a class="btn btn-outline-dark btn-xs" href="{{ url_for('search', rerun=1, **r.filters) }}">Search again</a>
-      <form method="post" action="{{ url_for('history_delete', sid=r.search_id) }}" class="d-inline">
+      <a class="btn btn-outline-dark btn-xs" href="{{ url_for('players.search', rerun=1, **r.filters) }}">Search again</a>
+      <form method="post" action="{{ url_for('history.history_delete', sid=r.search_id) }}" class="d-inline">
         <button class="btn btn-outline-danger btn-xs">Delete</button></form>
     </td>
   </tr>

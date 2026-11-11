@@ -1,0 +1,19 @@
+{# Oyuncu ekleme formu (add_player() saklı fonksiyonu) #}
+<div class="card card-body mb-4">
+  <h5>Add Player</h5>
+  <form method="post" action="{{ url_for('admin.admin_player_add') }}" class="row g-2">
+    <div class="col-md-3"><input name="name" class="form-control" placeholder="Name" required></div>
+    <div class="col-md-3"><select name="country_id" class="form-select"><option value="">Country</option>
+      {% for c in countries %}<option value="{{ c.country_id }}">{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="position_id" class="form-select" required><option value="">Position</option>
+      {% for p in positions %}<option value="{{ p.position_id }}">{{ p.label }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select name="club_id" class="form-select"><option value="">Club</option>
+      {% for c in clubs %}<option value="{{ c.club_id }}">{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><input name="dob" type="date" class="form-control"></div>
+    <div class="col-md-2"><select name="foot" class="form-select"><option value="">Foot</option>
+      <option value="right">right</option><option value="left">left</option><option value="both">both</option></select></div>
+    <div class="col-md-2"><input name="height" type="number" min="1" class="form-control" placeholder="Height (cm)"></div>
+    <div class="col-md-2"><input name="value" type="number" step="any" min="0" class="form-control" placeholder="Value (M€)"></div>
+    <div class="col-md-2 d-grid"><button class="btn btn-dark">Add</button></div>
+  </form>
+</div>

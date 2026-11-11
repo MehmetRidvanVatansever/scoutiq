@@ -3,25 +3,9 @@ Kullanıcılar, yıldızlar, raporlar, notlar SİLİNMEZ. Tekrar çalıştırıl
 Kullanım:  python scripts\\migrate_history.py
 (data klasöründe player_valuations.csv ve transfers.csv olmalı)
 """
-import io, os, sys
-import pandas as pd
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from common import read_csv as read, copy_df as copy, run_setup
 from db import get_db
 import history_data as hd
-
-
-def read(name, cols):
-    return pd.read_csv(os.path.join(ROOT, "data", name + ".csv"), usecols=cols)
-
-
-def copy(cur, table, df):
-    buf = io.StringIO()
-    df.to_csv(buf, index=False, header=False, date_format="%Y-%m-%d")
-    buf.seek(0)
-    cur.copy_expert(f"COPY {table} ({','.join(df.columns)}) FROM STDIN WITH CSV", buf)
 
 
 vals = read("player_valuations", hd.VALUE_COLS)
@@ -57,9 +41,7 @@ cur.execute("TRUNCATE market_values, transfers RESTART IDENTITY")
 copy(cur, "clubs", extra_clubs)
 copy(cur, "market_values", market_values)
 copy(cur, "transfers", transfers)
-cur.execute(open(os.path.join(ROOT, "sql", "indexes_views.sql"), encoding="utf-8").read())
-cur.execute(open(os.path.join(ROOT, "sql", "triggers.sql"), encoding="utf-8").read())
-cur.execute(open(os.path.join(ROOT, "sql", "functions.sql"), encoding="utf-8").read())
+run_setup(cur)   # indeksler, view'lar, trigger'lar, fonksiyonlar
 conn.commit()
 
 print("Eklenen ligsiz kulüp:", len(extra_clubs))

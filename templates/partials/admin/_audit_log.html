@@ -1,0 +1,11 @@
+{# Son yönetici işlemleri (audit_log) #}
+<h5>Recent Actions (audit log)</h5>
+<table class="table table-sm bg-white">
+  <thead><tr><th>#</th><th>User</th><th>Action</th><th>Table</th><th>Record</th><th>Time</th></tr></thead>
+  <tbody>
+  {% for l in logs %}
+  <tr><td>{{ l.log_id }}</td><td>{{ l.username or '-' }}</td><td>{{ l.action }}</td><td>{{ l.table_name }}</td>
+      <td>{{ l.record_id }}</td><td>{{ l.created_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
+  {% else %}<tr><td colspan="6" class="text-muted">No records.</td></tr>{% endfor %}
+  </tbody>
+</table>

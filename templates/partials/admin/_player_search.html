@@ -1,0 +1,42 @@
+{# Oyuncu arama / düzenleme / silme #}
+<div class="card card-body mb-4">
+  <h5>Search / Edit / Delete Players</h5>
+  <form method="get" action="{{ url_for('admin.admin') }}" class="row g-2">
+    <div class="col-md-3"><input name="aname" class="form-control" placeholder="Player name" value="{{ af.aname }}"></div>
+    <div class="col-md-3"><select name="acountry" class="form-select"><option value="">All countries</option>
+      {% for c in countries %}<option {{ 'selected' if c.name == af.acountry }}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><select name="aleague" class="form-select"><option value="">All leagues</option>
+      {% for l in leagues %}<option {{ 'selected' if l.league == af.aleague }}>{{ l.league }}</option>{% endfor %}</select></div>
+    <div class="col-md-2"><select name="aposition" class="form-select"><option value="">Position</option>
+      {% for m in mains %}<option {{ 'selected' if m.main_position == af.aposition }}>{{ m.main_position }}</option>{% endfor %}</select></div>
+    <div class="col-md-1 d-grid"><button class="btn btn-dark">Search</button></div>
+    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('admin.admin') }}">↺</a></div>
+  </form>
+  {% if found is not none %}
+  <p class="text-muted mt-3 mb-2">{{ found|length }} results{% if found|length == 50 %} (showing first 50, narrow your search){% endif %}</p>
+  <div class="table-responsive">
+  <table class="table table-sm table-hover bg-white align-middle mb-0">
+    <thead><tr><th>ID</th><th>Player</th><th>Age</th><th>Country</th><th>Position</th><th>Club</th><th>Value</th><th></th></tr></thead>
+    <tbody>
+    {% for p in found %}
+    <tr>
+      <td>{{ p.player_id }}</td>
+      <td><a href="{{ url_for('players.player', pid=p.player_id) }}">{{ p.name }}</a></td>
+      <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td><td>{{ p.sub_position }}</td>
+      <td>{{ p.club or '-' }}</td><td>{{ p.market_value_eur|eur }}</td>
+      <td class="text-nowrap">
+        <a class="btn btn-outline-dark btn-xs" href="{{ url_for('admin.admin_player_edit', pid=p.player_id) }}">Edit</a>
+        <form method="post" action="{{ url_for('admin.admin_player_delete', pid=p.player_id) }}" class="d-inline"
+              data-confirm="{{ p.name }} will be deleted. This cannot be undone. Continue?">
+          <input type="hidden" name="next" value="{{ request.full_path }}">
+          <button class="btn btn-outline-danger btn-xs">Delete</button></form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" class="text-center text-muted">No players found.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>

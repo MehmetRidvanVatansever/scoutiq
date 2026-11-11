@@ -15,16 +15,18 @@ goals and assists are all-time totals. Each player page shows the market value h
 6. `python app.py` → http://127.0.0.1:5000 (the first registered user becomes admin, later ones scout)
 
 Optional environment variables: `DB_NAME`, `DB_USER`, `DB_HOST`, `DB_PORT`, `SECRET_KEY`.
-To apply only SQL changes to an existing database without deleting data: `python scripts/apply_sql.py sql/<file>.sql`
+To apply the SQL files to an existing database without deleting data: `python scripts/apply_sql.py` (all) or `python scripts/apply_sql.py sql/<file>.sql`
 
 ## Folders
-- `app.py` Flask application · `db.py` database connection
-- `sql/schema.sql` tables and constraints · `sql/indexes_views.sql` indexes and views · `sql/triggers.sql` triggers · `sql/functions.sql` stored functions
-- `scripts/load_data.py` data cleaning and loading · `scripts/season_data.py` 2024 calculation · `scripts/history_data.py` value history and transfer preparation
-- `scripts/apply_sql.py` applies a .sql file without deleting data
+- `app.py` builds the Flask app and registers the Blueprints · `config.py` settings and constants
+- `db.py` database connection + `query` / `execute` / `transaction` · `decorators.py` `login_required` / `admin_required` · `utils.py` shared helpers
+- `routes/` one Blueprint per area: `auth`, `players`, `reports`, `history`, `watchlist`, `clubs`, `compare`, `admin`
+- `sql/schema.sql` tables and constraints · `sql/indexes.sql` · `sql/views.sql` · `sql/triggers.sql` · `sql/functions.sql`
+- `scripts/load_data.py` data cleaning and loading · `scripts/season_data.py` 2024 calculation · `scripts/history_data.py` value history and transfers · `scripts/common.py` shared script helpers
+- `scripts/apply_sql.py` applies the SQL files without deleting data (no argument = indexes, views, triggers, functions)
 - `scripts/migrate_history.py` adds the value history + transfer tables to an existing database (user/report data is kept)
 - `scripts/migrate_2024.py` one-off script for migrating from an older version (not needed for a new install)
-- `templates/` HTML templates (`_macros.html` shared parts) · `static/` CSS · `docs/` documentation (English and Turkish)
+- `templates/` HTML templates (`_macros.html` shared parts, `partials/` parts of the player and admin pages) · `static/` CSS · `docs/` documentation (English and Turkish)
 
 ---
 
@@ -42,5 +44,5 @@ gol ve asist tüm zamanların toplamıdır. Oyuncu sayfasında piyasa değeri ge
 5. `python scripts/load_data.py` (19 tabloyu kurar, verileri yükler, indeks, view, trigger ve fonksiyonları oluşturur; **mevcut verileri siler**)
 6. `python app.py` → http://127.0.0.1:5000 (ilk kayıt olan kullanıcı admin olur, sonrakiler scout)
 
-Mevcut veritabanına veri silmeden yalnızca SQL değişikliklerini uygulamak için: `python scripts/apply_sql.py sql/<dosya>.sql`
+Mevcut veritabanına veri silmeden SQL dosyalarını uygulamak için: `python scripts/apply_sql.py` (hepsi) ya da `python scripts/apply_sql.py sql/<dosya>.sql`
 Klasörlerin açıklaması yukarıdaki İngilizce bölümle aynıdır; dokümantasyon `docs/` klasöründe iki dilde bulunur.

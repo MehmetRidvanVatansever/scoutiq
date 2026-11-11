@@ -11,19 +11,19 @@
 <body>
 <nav class="navbar navbar-expand navbar-dark bg-dark mb-4">
   <div class="container flex-wrap">
-    <a class="navbar-brand" href="{{ url_for('search') }}">⚽ ScoutIQ</a>
+    <a class="navbar-brand" href="{{ url_for('players.search') }}">⚽ ScoutIQ</a>
     {% if session.user_id %}
     <div class="navbar-nav me-auto">
-      <a class="nav-link" href="{{ url_for('search') }}">Search</a>
-      <a class="nav-link" href="{{ url_for('clubs') }}">Clubs</a>
-      <a class="nav-link" href="{{ url_for('top_starred') }}">★ Most Starred</a>
-      <a class="nav-link" href="{{ url_for('compare') }}">Compare ({{ session.get('cmp', [])|length }})</a>
-      <a class="nav-link" href="{{ url_for('watchlist') }}">Watchlist</a>
-      <a class="nav-link" href="{{ url_for('history') }}">Search History</a>
-      {% if session.role == 'admin' %}<a class="nav-link" href="{{ url_for('admin') }}">Admin</a>{% endif %}
+      <a class="nav-link" href="{{ url_for('players.search') }}">Search</a>
+      <a class="nav-link" href="{{ url_for('clubs.clubs') }}">Clubs</a>
+      <a class="nav-link" href="{{ url_for('watchlist.top_starred') }}">★ Most Starred</a>
+      <a class="nav-link" href="{{ url_for('compare.compare') }}">Compare ({{ session.get('cmp', [])|length }})</a>
+      <a class="nav-link" href="{{ url_for('watchlist.watchlist') }}">Watchlist</a>
+      <a class="nav-link" href="{{ url_for('history.history') }}">Search History</a>
+      {% if session.role == 'admin' %}<a class="nav-link" href="{{ url_for('admin.admin') }}">Admin</a>{% endif %}
     </div>
     <span class="navbar-text me-3">{{ session.username }} ({{ session.role }})</span>
-    <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Log out</a>
+    <a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">Log out</a>
     {% endif %}
   </div>
 </nav>

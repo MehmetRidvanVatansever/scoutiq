@@ -1,0 +1,27 @@
+{# Piyasa değeri geçmişi: SVG grafik (utils.value_chart) ve tüm değerlemeler #}
+<div class="card card-body mb-3">
+  <div class="d-flex justify-content-between align-items-baseline flex-wrap">
+    <h5>Market Value History</h5>
+    {% if peak %}<small class="text-muted">Peak: <b>{{ peak.market_value_eur|eur }}</b> ({{ peak.valued_at.strftime('%m.%Y') }})</small>{% endif %}
+  </div>
+  {% if chart %}
+  <svg viewBox="0 0 {{ chart.w }} {{ chart.h }}" class="w-100 value-chart" role="img" aria-label="Market value chart">
+    <line x1="{{ chart.pad }}" y1="{{ chart.h - chart.pad }}" x2="{{ chart.w - chart.pad }}" y2="{{ chart.h - chart.pad }}" class="axis"/>
+    <line x1="{{ chart.pad }}" y1="{{ chart.pad }}" x2="{{ chart.w - chart.pad }}" y2="{{ chart.pad }}" class="grid"/>
+    <text x="{{ chart.pad }}" y="{{ chart.pad - 8 }}" class="lbl">{{ chart.max }}</text>
+    {% for t in chart.ticks %}<text x="{{ t.x }}" y="{{ chart.h - chart.pad + 16 }}" text-anchor="middle" class="lbl">{{ t.year }}</text>{% endfor %}
+    <polyline points="{{ chart.line }}" class="line"/>
+    {% for pt in chart.points %}<circle cx="{{ pt.x }}" cy="{{ pt.y }}" r="3.5" class="dot"><title>{{ pt.label }}</title></circle>{% endfor %}
+  </svg>
+  {% elif values %}
+    <small class="text-muted">Only one valuation: {{ values[0].market_value_eur|eur }} ({{ values[0].valued_at.strftime('%d.%m.%Y') }})</small>
+  {% else %}<small class="text-muted">No value history.</small>{% endif %}
+  {% if values %}
+  <details class="mt-2"><summary class="small">All valuations ({{ values|length }})</summary>
+    <table class="table table-sm small mt-2 mb-0">
+      <thead><tr><th>Date</th><th>Value</th><th>Club</th></tr></thead>
+      <tbody>{% for v in values|reverse %}<tr><td>{{ v.valued_at.strftime('%d.%m.%Y') }}</td><td>{{ v.market_value_eur|eur }}</td><td>{{ v.club or '-' }}</td></tr>{% endfor %}</tbody>
+    </table>
+  </details>
+  {% endif %}
+</div>

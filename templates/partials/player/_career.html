@@ -1,0 +1,19 @@
+{# Kariyer / önceki kulüpler (player_career view'ı) #}
+<div class="card card-body mb-3">
+  <h5>Career / Previous Clubs</h5>
+  {% if career %}
+  <table class="table table-sm small mb-0">
+    <thead><tr><th>Club</th><th>Joined</th><th>Left</th><th>Fee</th></tr></thead>
+    <tbody>
+    {% for c in career %}
+      <tr{% if not c.left_at %} class="table-success"{% endif %}>
+        <td>{% if c.has_league %}<a href="{{ url_for('clubs.club', cid=c.club_id) }}">{{ c.club }}</a>{% else %}{{ c.club }}{% endif %}</td>
+        <td>{{ c.joined_at.strftime('%m.%Y') if c.joined_at else '-' }}</td>
+        <td>{{ c.left_at.strftime('%m.%Y') if c.left_at else 'Present' }}</td>
+        <td>{% if c.fee_eur is none %}-{% elif c.fee_eur == 0 %}Free{% else %}{{ c.fee_eur|eur }}{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<small class="text-muted">No transfer records.</small>{% endif %}
+</div>

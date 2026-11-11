@@ -6,10 +6,10 @@
   <tbody>
   {% for p in players %}
   <tr>
-    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
-    <td>{{ p.age or '-' }}</td><td>{{ p.sub_position }}</td><td>{% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td>
+    <td><a href="{{ url_for('players.player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td>{{ p.age or '-' }}</td><td>{{ p.sub_position }}</td><td>{% if p.club_id %}<a href="{{ url_for('clubs.club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td>
     <td>{{ p.market_value_eur|eur }}</td>
-    <td><form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}">
+    <td><form method="post" action="{{ url_for('watchlist.watchlist_remove', pid=p.player_id) }}">
       <button class="btn btn-outline-danger btn-xs">Remove</button></form></td>
   </tr>
   {% else %}

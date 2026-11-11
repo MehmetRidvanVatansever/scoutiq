@@ -1,0 +1,31 @@
+{# Oyuncunun temel bilgileri, karşılaştırma ve izleme listesi düğmeleri #}
+<div class="card card-body mb-3">
+  <div class="d-flex justify-content-between flex-wrap">
+    <div>
+      <h3>{{ p.name }}</h3>
+      <p class="text-muted mb-1">{{ p.main_position }} / {{ p.sub_position }} · {% if p.club_id %}<a href="{{ url_for('clubs.club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}No club{% endif %} · {{ p.league or '-' }}</p>
+    </div>
+    <h3 class="text-success">{{ p.market_value_eur|eur }}</h3>
+  </div>
+  <div class="row text-center my-3">
+    <div class="col"><div class="fs-4">{{ p.age or '-' }}</div><small>Age</small></div>
+    <div class="col"><div class="fs-4">{{ p.country or '-' }}</div><small>Country</small></div>
+    <div class="col"><div class="fs-4">{{ extra.height_cm or '-' }}</div><small>Height (cm)</small></div>
+    <div class="col"><div class="fs-4">{{ extra.foot or '-' }}</div><small>Foot</small></div>
+    <div class="col"><div class="fs-4">{{ p.goals }}</div><small>Goals</small></div>
+    <div class="col"><div class="fs-4">{{ p.assists }}</div><small>Assists</small></div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <form method="post" action="{{ url_for('compare.compare_add', pid=p.player_id) }}">
+      <button class="btn btn-outline-secondary btn-sm">Add to comparison</button></form>
+    {% if in_list %}
+    <form method="post" action="{{ url_for('watchlist.watchlist_remove', pid=p.player_id) }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn-warning btn-sm">★ Remove from list</button></form>
+    {% else %}
+    <form method="post" action="{{ url_for('watchlist.watchlist_add', pid=p.player_id) }}">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <button class="btn btn-outline-warning btn-sm">☆ Add to watchlist</button></form>
+    {% endif %}
+  </div>
+</div>

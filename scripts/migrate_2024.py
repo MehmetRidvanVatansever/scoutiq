@@ -2,25 +2,15 @@
 Veriler, kullanıcılar, yıldızlar, raporlar SİLİNMEZ.
 Kullanım:  python scripts\\migrate_2024.py   (data klasöründe CSV'ler olmalı)
 """
-import io, os, sys
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from common import read_csv as read, copy_df, run_sql
 from db import get_db
 import season_data as sd
 
 
-def read(name, cols):
-    return pd.read_csv(os.path.join(ROOT, "data", name + ".csv"), usecols=cols)
-
-
 def copy(cur, table, df, cols):
-    buf = io.StringIO()
-    df[cols].to_csv(buf, index=False, header=False)
-    buf.seek(0)
-    cur.copy_expert(f"COPY {table} ({','.join(cols)}) FROM STDIN WITH CSV", buf)
+    copy_df(cur, table, df[cols])
 
 
 players = read("players", ["player_id"])
@@ -54,7 +44,8 @@ cur.execute("UPDATE players SET is_active = (player_id IN (SELECT player_id FROM
             "WHERE player_id IN (SELECT player_id FROM tmp_all)")
 cur.execute("UPDATE players p SET club_id = m.club_id FROM tmp_main m WHERE p.player_id = m.player_id")
 cur.execute("UPDATE players SET is_active = TRUE WHERE player_id NOT IN (SELECT player_id FROM tmp_all)")  # admin'in eklediği oyuncular
-cur.execute(open(os.path.join(ROOT, "sql", "indexes_views.sql"), encoding="utf-8").read())
+run_sql(cur, "indexes.sql")
+run_sql(cur, "views.sql")
 conn.commit()
 
 cur.execute("SELECT count(*) FROM players WHERE is_active")

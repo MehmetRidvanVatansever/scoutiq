@@ -3,97 +3,11 @@
 <h4>Admin Panel</h4>
 <p class="text-muted">{{ stats.players }} players · {{ stats.users }} users · {{ stats.reports }} reports</p>
 
-<div class="card card-body mb-4">
-  <h5>Search / Edit / Delete Players</h5>
-  <form method="get" action="{{ url_for('admin') }}" class="row g-2">
-    <div class="col-md-3"><input name="aname" class="form-control" placeholder="Player name" value="{{ af.aname }}"></div>
-    <div class="col-md-3"><select name="acountry" class="form-select"><option value="">All countries</option>
-      {% for c in countries %}<option {{ 'selected' if c.name == af.acountry }}>{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-md-2"><select name="aleague" class="form-select"><option value="">All leagues</option>
-      {% for l in leagues %}<option {{ 'selected' if l.league == af.aleague }}>{{ l.league }}</option>{% endfor %}</select></div>
-    <div class="col-md-2"><select name="aposition" class="form-select"><option value="">Position</option>
-      {% for m in mains %}<option {{ 'selected' if m.main_position == af.aposition }}>{{ m.main_position }}</option>{% endfor %}</select></div>
-    <div class="col-md-1 d-grid"><button class="btn btn-dark">Search</button></div>
-    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('admin') }}">↺</a></div>
-  </form>
-  {% if found is not none %}
-  <p class="text-muted mt-3 mb-2">{{ found|length }} results{% if found|length == 50 %} (showing first 50, narrow your search){% endif %}</p>
-  <div class="table-responsive">
-  <table class="table table-sm table-hover bg-white align-middle mb-0">
-    <thead><tr><th>ID</th><th>Player</th><th>Age</th><th>Country</th><th>Position</th><th>Club</th><th>Value</th><th></th></tr></thead>
-    <tbody>
-    {% for p in found %}
-    <tr>
-      <td>{{ p.player_id }}</td>
-      <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
-      <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td><td>{{ p.sub_position }}</td>
-      <td>{{ p.club or '-' }}</td><td>{{ p.market_value_eur|eur }}</td>
-      <td class="text-nowrap">
-        <a class="btn btn-outline-dark btn-xs" href="{{ url_for('admin_player_edit', pid=p.player_id) }}">Edit</a>
-        <form method="post" action="{{ url_for('admin_player_delete', pid=p.player_id) }}" class="d-inline"
-              data-confirm="{{ p.name }} will be deleted. This cannot be undone. Continue?">
-          <input type="hidden" name="next" value="{{ request.full_path }}">
-          <button class="btn btn-outline-danger btn-xs">Delete</button></form>
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="8" class="text-center text-muted">No players found.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% endif %}
-</div>
+{% include "partials/admin/_player_search.html" %}
 
-<div class="card card-body mb-4">
-  <h5>Add Player</h5>
-  <form method="post" action="{{ url_for('admin_player_add') }}" class="row g-2">
-    <div class="col-md-3"><input name="name" class="form-control" placeholder="Name" required></div>
-    <div class="col-md-3"><select name="country_id" class="form-select"><option value="">Country</option>
-      {% for c in countries %}<option value="{{ c.country_id }}">{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-md-3"><select name="position_id" class="form-select" required><option value="">Position</option>
-      {% for p in positions %}<option value="{{ p.position_id }}">{{ p.label }}</option>{% endfor %}</select></div>
-    <div class="col-md-3"><select name="club_id" class="form-select"><option value="">Club</option>
-      {% for c in clubs %}<option value="{{ c.club_id }}">{{ c.name }}</option>{% endfor %}</select></div>
-    <div class="col-md-3"><input name="dob" type="date" class="form-control"></div>
-    <div class="col-md-2"><select name="foot" class="form-select"><option value="">Foot</option>
-      <option value="right">right</option><option value="left">left</option><option value="both">both</option></select></div>
-    <div class="col-md-2"><input name="height" type="number" min="1" class="form-control" placeholder="Height (cm)"></div>
-    <div class="col-md-2"><input name="value" type="number" step="any" min="0" class="form-control" placeholder="Value (M€)"></div>
-    <div class="col-md-2 d-grid"><button class="btn btn-dark">Add</button></div>
-  </form>
-</div>
+{% include "partials/admin/_player_add.html" %}
 
-<h5>Users</h5>
-<table class="table bg-white align-middle">
-  <thead class="table-dark"><tr><th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Registered</th><th></th></tr></thead>
-  <tbody>
-  {% for u in users %}
-  <tr>
-    <td>{{ u.user_id }}</td><td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.role }}</td>
-    <td>{{ u.created_at.strftime('%d.%m.%Y') }}</td>
-    <td class="d-flex gap-1">
-      {% if u.user_id != session.user_id %}
-      <form method="post" action="{{ url_for('admin_role', uid=u.user_id) }}">
-        <input type="hidden" name="role" value="{{ 'scout' if u.role == 'admin' else 'admin' }}">
-        <button class="btn btn-outline-dark btn-xs">{{ 'Make scout' if u.role == 'admin' else 'Make admin' }}</button></form>
-      <form method="post" action="{{ url_for('admin_user_delete', uid=u.user_id) }}" data-confirm="{{ u.username }} and all of their records will be deleted. This cannot be undone. Continue?">
-        <button class="btn btn-outline-danger btn-xs">Delete</button></form>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-  </tbody>
-</table>
+{% include "partials/admin/_users.html" %}
 
-<h5>Recent Actions (audit log)</h5>
-<table class="table table-sm bg-white">
-  <thead><tr><th>#</th><th>User</th><th>Action</th><th>Table</th><th>Record</th><th>Time</th></tr></thead>
-  <tbody>
-  {% for l in logs %}
-  <tr><td>{{ l.log_id }}</td><td>{{ l.username or '-' }}</td><td>{{ l.action }}</td><td>{{ l.table_name }}</td>
-      <td>{{ l.record_id }}</td><td>{{ l.created_at.strftime('%d.%m.%Y %H:%M') }}</td></tr>
-  {% else %}<tr><td colspan="6" class="text-muted">No records.</td></tr>{% endfor %}
-  </tbody>
-</table>
+{% include "partials/admin/_audit_log.html" %}
 {% endblock %}

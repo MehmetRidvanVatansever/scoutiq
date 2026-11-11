@@ -1,23 +1,12 @@
-import os, sys, io
+"""Kaggle CSV dosyalarını temizleyip 19 tabloluk şemaya yükler (MEVCUT VERİLER SİLİNİR).
+Kullanım:  python scripts/load_data.py
+"""
 import pandas as pd
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from common import read_csv as read, copy_df as load, run_sql, run_setup
 from db import get_db
 import season_data
 import history_data
-
-
-def read(name, cols):
-    return pd.read_csv(os.path.join(ROOT, "data", name + ".csv"), usecols=cols)
-
-
-def load(cur, table, df):
-    buf = io.StringIO()
-    df.to_csv(buf, index=False, header=False, date_format="%Y-%m-%d")
-    buf.seek(0)
-    cur.copy_expert(f"COPY {table} ({','.join(df.columns)}) FROM STDIN WITH CSV", buf)
 
 
 players = read("players", ["player_id", "name", "country_of_citizenship", "date_of_birth",
@@ -78,7 +67,7 @@ clubs["club_id"] = clubs.club_id.astype(int)
 
 conn = get_db()
 cur = conn.cursor()
-cur.execute(open(os.path.join(ROOT, "sql", "schema.sql"), encoding="utf-8").read())
+run_sql(cur, "schema.sql")
 load(cur, "countries", countries)
 load(cur, "positions", pos)
 load(cur, "competitions", competitions)
@@ -90,9 +79,7 @@ load(cur, "market_values", market_values)
 load(cur, "transfers", transfers)
 cur.execute("SELECT setval(pg_get_serial_sequence('countries','country_id'), (SELECT max(country_id) FROM countries))")
 cur.execute("SELECT setval(pg_get_serial_sequence('positions','position_id'), (SELECT max(position_id) FROM positions))")
-cur.execute(open(os.path.join(ROOT, "sql", "indexes_views.sql"), encoding="utf-8").read())
-cur.execute(open(os.path.join(ROOT, "sql", "triggers.sql"), encoding="utf-8").read())
-cur.execute(open(os.path.join(ROOT, "sql", "functions.sql"), encoding="utf-8").read())
+run_setup(cur)   # indeksler, view'lar, trigger'lar, fonksiyonlar
 conn.commit()
 for t in ["countries", "positions", "competitions", "clubs", "players", "player_stats", "club_squads",
           "market_values", "transfers"]:

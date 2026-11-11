@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 {% from "_macros.html" import star, th with context %}
-<a href="{{ url_for('clubs') }}">← Back to clubs</a>
+<a href="{{ url_for('clubs.clubs') }}">← Back to clubs</a>
 <div class="card card-body my-3">
   <h3>{{ c.name }}</h3>
   <p class="text-muted mb-2">{{ c.league or '-' }} · {{ c.country or '-' }} · players who appeared for this club in 2024</p>
@@ -24,7 +24,7 @@
     <input type="hidden" name="sort" value="{{ sort }}">
     <input type="hidden" name="dir" value="{{ direction }}">
     <div class="col-md-1 d-grid"><button class="btn btn-dark">Search</button></div>
-    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('club', cid=c.club_id) }}">↺</a></div>
+    <div class="col-md-1 d-grid"><a class="btn btn-outline-secondary" href="{{ url_for('clubs.club', cid=c.club_id) }}">↺</a></div>
   </div>
 </form>
 
@@ -32,12 +32,12 @@
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
   <thead class="table-dark"><tr>
-    {{ th('name', 'Player', 'club', {'cid': c.club_id}) }}{{ th('age', 'Age', 'club', {'cid': c.club_id}) }}<th>Country</th><th>Position</th>
-    {{ th('value', 'Value', 'club', {'cid': c.club_id}) }}{{ th('goals', 'Goals', 'club', {'cid': c.club_id}) }}{{ th('assists', 'Assists', 'club', {'cid': c.club_id}) }}<th></th></tr></thead>
+    {{ th('name', 'Player', 'clubs.club', {'cid': c.club_id}) }}{{ th('age', 'Age', 'clubs.club', {'cid': c.club_id}) }}<th>Country</th><th>Position</th>
+    {{ th('value', 'Value', 'clubs.club', {'cid': c.club_id}) }}{{ th('goals', 'Goals', 'clubs.club', {'cid': c.club_id}) }}{{ th('assists', 'Assists', 'clubs.club', {'cid': c.club_id}) }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
-    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td><a href="{{ url_for('players.player', pid=p.player_id) }}">{{ p.name }}</a></td>
     <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td><td>{{ p.sub_position }}</td>
     <td>{{ p.market_value_eur|eur }}</td><td>{{ p.goals }}</td><td>{{ p.assists }}</td>
     <td>{{ star(p, fav) }}</td>

@@ -61,6 +61,11 @@ def num(v):
         return None
 
 
+def safe_next(default):
+    n = request.form.get("next", "")
+    return n if n.startswith("/") and not n.startswith("//") else default
+
+
 def login_required(f):
     @wraps(f)
     def w(*a, **k):
@@ -195,7 +200,7 @@ def search():
     leagues = query("SELECT DISTINCT league FROM player_overview WHERE league IS NOT NULL ORDER BY 1")
     positions = query("SELECT DISTINCT main_position FROM positions ORDER BY 1")
     args = {k: v for k, v in request.args.items() if k != "page" and v}
-    return render_template("search.html", f=f, sort=sort, direction=direction, defaults=DEFAULT_DIR, players=players, total=total,
+    return render_template("search.html", fav=my_fav(), f=f, sort=sort, direction=direction, defaults=DEFAULT_DIR, players=players, total=total,
                            page=page, pages=max(1, math.ceil(total / PER_PAGE)), args=args,
                            countries=countries, leagues=leagues, positions=positions)
 
@@ -256,6 +261,12 @@ def my_list():
                    "RETURNING watchlist_id", (uid,))[0]
 
 
+def my_fav():
+    """Kullanıcının izleme listesindeki oyuncu id'leri (yıldızı dolu göstermek için)."""
+    return {r["player_id"] for r in query(
+        "SELECT player_id FROM watchlist_players WHERE watchlist_id = %s", (my_list(),))}
+
+
 @app.route("/watchlist")
 @login_required
 def watchlist():
@@ -270,7 +281,7 @@ def watchlist():
 def watchlist_add(pid):
     execute("INSERT INTO watchlist_players (watchlist_id, player_id) VALUES (%s, %s) "
             "ON CONFLICT DO NOTHING", (my_list(), pid))
-    return redirect(request.form.get("next") or url_for("watchlist"))
+    return redirect(safe_next(url_for("watchlist")))
 
 
 @app.route("/watchlist/remove/<int:pid>", methods=["POST"])
@@ -278,7 +289,72 @@ def watchlist_add(pid):
 def watchlist_remove(pid):
     execute("DELETE FROM watchlist_players WHERE watchlist_id = %s AND player_id = %s",
             (my_list(), pid))
-    return redirect(request.form.get("next") or url_for("watchlist"))
+    return redirect(safe_next(url_for("watchlist")))
+
+
+# ---------- en çok yıldızlananlar ----------
+@app.route("/top-starred")
+@login_required
+def top_starred():
+    players = query("SELECT * FROM top_starred_players ORDER BY rank, name LIMIT 25")
+    return render_template("top_starred.html", players=players, fav=my_fav())
+
+
+# ---------- kulüpler ----------
+@app.route("/clubs")
+@login_required
+def clubs():
+    name = request.args.get("name", "").strip()
+    league = request.args.get("league", "").strip()
+    where, params = [], []
+    if name:
+        where.append("name ILIKE %s"); params.append(f"%{name}%")
+    if league:
+        where.append("league = %s"); params.append(league)
+    w = (" WHERE " + " AND ".join(where)) if where else ""
+    total = query("SELECT count(*) AS n FROM club_overview" + w, params, one=True)["n"]
+    rows = query("SELECT * FROM club_overview" + w +
+                 " ORDER BY total_value DESC NULLS LAST, name LIMIT 50", params)
+    leagues = query("SELECT DISTINCT league FROM club_overview WHERE league IS NOT NULL ORDER BY 1")
+    return render_template("clubs.html", clubs=rows, total=total, leagues=leagues,
+                           name=name, league=league)
+
+
+@app.route("/club/<int:cid>")
+@login_required
+def club(cid):
+    c = query("SELECT * FROM club_overview WHERE club_id = %s", (cid,), one=True)
+    if not c:
+        abort(404)
+    keys = ["name", "position", "age_min", "age_max", "value_min", "value_max"]
+    f = {k: request.args.get(k, "").strip() for k in keys}
+    sort = request.args.get("sort", "value")
+    if sort not in SORTS:
+        sort = "value"
+    direction = request.args.get("dir", DEFAULT_DIR[sort])
+    if direction not in ("asc", "desc"):
+        direction = DEFAULT_DIR[sort]
+
+    where, params = ["r.club_id = %s"], [cid]
+    if f["name"]:
+        where.append("name ILIKE %s"); params.append(f"%{f['name']}%")
+    if f["position"]:
+        where.append("main_position = %s"); params.append(f["position"])
+    if num(f["age_min"]) is not None:
+        where.append("age >= %s"); params.append(num(f["age_min"]))
+    if num(f["age_max"]) is not None:
+        where.append("age <= %s"); params.append(num(f["age_max"]))
+    if num(f["value_min"]) is not None:
+        where.append("market_value_eur >= %s"); params.append(num(f["value_min"]) * 1_000_000)
+    if num(f["value_max"]) is not None:
+        where.append("market_value_eur <= %s"); params.append(num(f["value_max"]) * 1_000_000)
+    players = query("SELECT po.* FROM player_overview po JOIN club_roster r USING (player_id) WHERE "
+                    + " AND ".join(where) +
+                    f" ORDER BY {SORTS[sort]} {direction} NULLS LAST, po.player_id", params)
+    positions = query("SELECT DISTINCT main_position FROM positions ORDER BY 1")
+    args = {k: v for k, v in request.args.items() if v}
+    return render_template("club.html", c=c, players=players, fav=my_fav(), f=f, sort=sort,
+                           direction=direction, defaults=DEFAULT_DIR, args=args, positions=positions)
 
 
 # ---------- karsilastirma ----------
@@ -310,7 +386,7 @@ def compare_add(pid):
     else:
         ids.append(pid)
     session["cmp"] = ids
-    return redirect(request.form.get("next") or url_for("compare"))
+    return redirect(safe_next(url_for("compare")))
 
 
 @app.route("/compare/remove/<int:pid>", methods=["POST"])
@@ -355,8 +431,25 @@ def audit(action, table, rec_id):
 @app.route("/admin")
 @admin_required
 def admin():
+    af = {k: request.args.get(k, "").strip() for k in ["aname", "acountry", "aleague", "aposition"]}
+    found = None
+    if any(af.values()):
+        where, params = [], []
+        if af["aname"]:
+            where.append("name ILIKE %s"); params.append(f"%{af['aname']}%")
+        if af["acountry"]:
+            where.append("country = %s"); params.append(af["acountry"])
+        if af["aleague"]:
+            where.append("league = %s"); params.append(af["aleague"])
+        if af["aposition"]:
+            where.append("main_position = %s"); params.append(af["aposition"])
+        found = query("SELECT * FROM player_overview WHERE " + " AND ".join(where) +
+                      " ORDER BY market_value_eur DESC NULLS LAST, player_id LIMIT 50", params)
     return render_template(
-        "admin.html",
+        "admin.html", af=af, found=found,
+        top=query("SELECT * FROM top_starred_players ORDER BY rank, name LIMIT 5"),
+        leagues=query("SELECT DISTINCT league FROM player_overview WHERE league IS NOT NULL ORDER BY 1"),
+        mains=query("SELECT DISTINCT main_position FROM positions ORDER BY 1"),
         users=query("SELECT u.user_id, u.username, u.email, r.name AS role, u.created_at "
                     "FROM users u JOIN roles r USING (role_id) ORDER BY u.user_id"),
         logs=query("SELECT a.log_id, a.action, a.table_name, a.record_id, a.created_at, u.username "
@@ -401,11 +494,11 @@ def admin_player_add():
         name = f["name"].strip()
         if not name:
             raise ValueError
-        value = int(float(f["value"]) * 1_000_000) if f.get("value") else None
+        value = int(round(float(f["value"]) * 1_000_000)) if f.get("value") else None
         new_id = query("SELECT COALESCE(max(player_id), 0) + 1 AS id FROM players", one=True)["id"]
         transaction([
             ("INSERT INTO players (player_id, name, country_id, position_id, club_id, "
-             "date_of_birth, market_value_eur) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+             "date_of_birth, market_value_eur, is_active) VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE)",
              (new_id, name, f.get("country_id") or None, f["position_id"],
               f.get("club_id") or None, f.get("dob") or None, value)),
             ("INSERT INTO player_stats (player_id) VALUES (%s)", (new_id,)),
@@ -420,7 +513,7 @@ def admin_player_add():
 @admin_required
 def admin_player_value(pid):
     try:
-        value = int(float(request.form["value"]) * 1_000_000)
+        value = int(round(float(request.form["value"]) * 1_000_000))
         transaction([("UPDATE players SET market_value_eur = %s WHERE player_id = %s", (value, pid)),
                      audit("UPDATE", "players", pid)])
         flash("Değer güncellendi.")
@@ -435,7 +528,41 @@ def admin_player_delete(pid):
     transaction([audit("DELETE", "players", pid),
                  ("DELETE FROM players WHERE player_id = %s", (pid,))])
     flash("Oyuncu silindi.")
-    return redirect(url_for("search"))
+    return redirect(safe_next(url_for("search")))
+
+
+@app.route("/admin/player/edit/<int:pid>", methods=["GET", "POST"])
+@admin_required
+def admin_player_edit(pid):
+    if request.method == "POST":
+        f = request.form
+        try:
+            name = f["name"].strip()
+            if not name:
+                raise ValueError
+            value = int(round(float(f["value"]) * 1_000_000)) if f.get("value") else None
+            height = int(f["height"]) if f.get("height") else None
+            transaction([
+                ("UPDATE players SET name = %s, country_id = %s, position_id = %s, club_id = %s, "
+                 "date_of_birth = %s, foot = %s, height_cm = %s, market_value_eur = %s "
+                 "WHERE player_id = %s",
+                 (name, f.get("country_id") or None, f["position_id"], f.get("club_id") or None,
+                  f.get("dob") or None, f.get("foot") or None, height, value, pid)),
+                audit("UPDATE", "players", pid)])
+            flash("Oyuncu güncellendi.")
+            return redirect(url_for("player", pid=pid))
+        except (ValueError, psycopg2.Error):
+            flash("Güncellenemedi: bilgileri kontrol et (değer ve boy negatif olamaz).")
+            return redirect(url_for("admin_player_edit", pid=pid))
+    p = query("SELECT * FROM players WHERE player_id = %s", (pid,), one=True)
+    if not p:
+        abort(404)
+    return render_template(
+        "admin_player_edit.html", p=p,
+        countries=query("SELECT country_id, name FROM countries ORDER BY name"),
+        positions=query("SELECT position_id, main_position || ' - ' || sub_position AS label "
+                        "FROM positions ORDER BY 2"),
+        clubs=query("SELECT club_id, name FROM clubs ORDER BY name"))
 
 
 if __name__ == "__main__":

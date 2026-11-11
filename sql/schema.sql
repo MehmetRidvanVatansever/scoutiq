@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS audit_log, player_notes, search_history, comparison_players,
+DROP TABLE IF EXISTS club_squads, audit_log, player_notes, search_history, comparison_players,
   comparisons, scout_reports, watchlist_players, watchlists, users, roles,
   player_stats, players, clubs, competitions, positions, countries CASCADE;
 
@@ -36,13 +36,23 @@ CREATE TABLE players (
   date_of_birth     DATE,
   foot              VARCHAR(10),
   height_cm         INT CHECK (height_cm > 0),
-  market_value_eur  BIGINT CHECK (market_value_eur >= 0)
+  market_value_eur  BIGINT CHECK (market_value_eur >= 0),
+  is_active         BOOLEAN NOT NULL DEFAULT FALSE   -- 2024'te en az bir maça çıktı mı
 );
 
 CREATE TABLE player_stats (
   player_id  INT PRIMARY KEY REFERENCES players(player_id) ON DELETE CASCADE,
   goals      INT NOT NULL DEFAULT 0 CHECK (goals >= 0),
   assists    INT NOT NULL DEFAULT 0 CHECK (assists >= 0)
+);
+
+-- Kulüp kadroları: bir oyuncunun belirli bir yılda hangi kulüp adına kaç maça çıktığı
+CREATE TABLE club_squads (
+  club_id         INT REFERENCES clubs(club_id) ON DELETE CASCADE,
+  player_id       INT REFERENCES players(player_id) ON DELETE CASCADE,
+  play_year       INT NOT NULL,
+  matches_played  INT NOT NULL CHECK (matches_played > 0),
+  PRIMARY KEY (club_id, player_id, play_year)
 );
 
 -- ===== SISTEM TABLOLARI =====

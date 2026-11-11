@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h4>★ En Çok Yıldızlanan Oyuncular</h4>
+<p class="text-muted">Scout'ların izleme listesine en çok eklediği ilk 25 oyuncu. Aynı sayıya sahip oyuncular aynı sırayı paylaşır.</p>
+<div class="table-responsive">
+<table class="table table-hover bg-white align-middle">
+  <thead class="table-dark"><tr><th>#</th><th>Oyuncu</th><th>Yaş</th><th>Pozisyon</th><th>Kulüp</th><th>Değer</th><th>★ Sayısı</th><th></th></tr></thead>
+  <tbody>
+  {% for p in players %}
+  <tr>
+    <td><b>{{ p.rank }}</b></td>
+    <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
+    <td>{{ p.age or '-' }}</td><td>{{ p.sub_position }}</td>
+    <td>{% if p.club_id %}<a href="{{ url_for('club', cid=p.club_id) }}">{{ p.club }}</a>{% else %}-{% endif %}</td>
+    <td>{{ p.market_value_eur|eur }}</td>
+    <td><span class="badge text-bg-warning fs-6">★ {{ p.star_count }}</span></td>
+    <td>{% if p.player_id in fav %}
+      <form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}" class="d-inline">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button class="btn btn-warning btn-xs" title="İzleme listesinden çıkar">★</button></form>
+      {% else %}
+      <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}" class="d-inline">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        <button class="btn btn-outline-warning btn-xs" title="İzleme listesine ekle">☆</button></form>
+      {% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="8" class="text-center text-muted">Henüz hiçbir oyuncu yıldızlanmamış.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

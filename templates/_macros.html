@@ -1,0 +1,18 @@
+{# Ortak parçalar: yıldız düğmesi ve sıralanabilir tablo başlığı #}
+{% macro star(p, fav) %}
+  {% if p.player_id in fav %}
+  <form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}" class="d-inline">
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <button class="btn btn-warning btn-xs" title="İzleme listesinden çıkar">★</button></form>
+  {% else %}
+  <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}" class="d-inline">
+    <input type="hidden" name="next" value="{{ request.full_path }}">
+    <button class="btn btn-outline-warning btn-xs" title="İzleme listesine ekle">☆</button></form>
+  {% endif %}
+{% endmacro %}
+
+{% macro th(key, label, endpoint, extra={}) %}
+  {% set nd = ('desc' if direction == 'asc' else 'asc') if sort == key else defaults[key] %}
+  <th><a class="text-white text-decoration-none" href="{{ url_for(endpoint, **dict(args, sort=key, dir=nd, **extra)) }}">{{ label }}
+    {% if sort == key %}{{ '▲' if direction == 'asc' else '▼' }}{% else %}<span class="opacity-50">⇅</span>{% endif %}</a></th>
+{% endmacro %}

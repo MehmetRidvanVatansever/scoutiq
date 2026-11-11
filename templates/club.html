@@ -1,10 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-{% macro th(key, label) %}
-  {% set nd = ('desc' if direction == 'asc' else 'asc') if sort == key else defaults[key] %}
-  <th><a class="text-white text-decoration-none" href="{{ url_for('club', cid=c.club_id, **dict(args, sort=key, dir=nd)) }}">{{ label }}
-    {% if sort == key %}{{ '▲' if direction == 'asc' else '▼' }}{% else %}<span class="opacity-50">⇅</span>{% endif %}</a></th>
-{% endmacro %}
+{% from "_macros.html" import star, th with context %}
 <a href="{{ url_for('clubs') }}">← Kulüplere dön</a>
 <div class="card card-body my-3">
   <h3>{{ c.name }}</h3>
@@ -36,23 +32,15 @@
 <div class="table-responsive">
 <table class="table table-hover bg-white align-middle">
   <thead class="table-dark"><tr>
-    {{ th('name', 'Oyuncu') }}{{ th('age', 'Yaş') }}<th>Ülke</th><th>Pozisyon</th>
-    {{ th('value', 'Değer') }}{{ th('goals', 'Gol') }}{{ th('assists', 'Asist') }}<th></th></tr></thead>
+    {{ th('name', 'Oyuncu', 'club', {'cid': c.club_id}) }}{{ th('age', 'Yaş', 'club', {'cid': c.club_id}) }}<th>Ülke</th><th>Pozisyon</th>
+    {{ th('value', 'Değer', 'club', {'cid': c.club_id}) }}{{ th('goals', 'Gol', 'club', {'cid': c.club_id}) }}{{ th('assists', 'Asist', 'club', {'cid': c.club_id}) }}<th></th></tr></thead>
   <tbody>
   {% for p in players %}
   <tr>
     <td><a href="{{ url_for('player', pid=p.player_id) }}">{{ p.name }}</a></td>
     <td>{{ p.age or '-' }}</td><td>{{ p.country or '-' }}</td><td>{{ p.sub_position }}</td>
     <td>{{ p.market_value_eur|eur }}</td><td>{{ p.goals }}</td><td>{{ p.assists }}</td>
-    <td>{% if p.player_id in fav %}
-      <form method="post" action="{{ url_for('watchlist_remove', pid=p.player_id) }}" class="d-inline">
-        <input type="hidden" name="next" value="{{ request.full_path }}">
-        <button class="btn btn-warning btn-xs" title="İzleme listesinden çıkar">★</button></form>
-      {% else %}
-      <form method="post" action="{{ url_for('watchlist_add', pid=p.player_id) }}" class="d-inline">
-        <input type="hidden" name="next" value="{{ request.full_path }}">
-        <button class="btn btn-outline-warning btn-xs" title="İzleme listesine ekle">☆</button></form>
-      {% endif %}</td>
+    <td>{{ star(p, fav) }}</td>
   </tr>
   {% else %}
   <tr><td colspan="8" class="text-center text-muted">Bu kriterlere uyan oyuncu yok.</td></tr>

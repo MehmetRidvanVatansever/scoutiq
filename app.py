@@ -1,4 +1,5 @@
 import math
+import os
 from functools import wraps
 
 import psycopg2
@@ -11,8 +12,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db
 
 app = Flask(__name__)
-app.secret_key = "scoutiq-gizli-anahtar"
+app.secret_key = os.getenv("SECRET_KEY", "scoutiq-gelistirme-anahtari")   # yayında SECRET_KEY ortam değişkeni tanımla
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"   # başka sitelerden gelen POST isteklerini (CSRF) engeller
 PER_PAGE = 25
+SORTS = {"value": "market_value_eur", "age": "age", "name": "name",
+         "goals": "goals", "assists": "assists"}
+DEFAULT_DIR = {"value": "desc", "age": "asc", "name": "asc",
+               "goals": "desc", "assists": "desc"}
 
 
 # ---------- yardimcilar ----------
@@ -59,6 +65,35 @@ def num(v):
         return float(v)
     except (TypeError, ValueError):
         return None
+
+
+def parse_sort():
+    """URL'deki sort ve dir değerlerini doğrular (izin verilmeyen değer varsayılana döner)."""
+    sort = request.args.get("sort", "value")
+    if sort not in SORTS:
+        sort = "value"
+    direction = request.args.get("dir", DEFAULT_DIR[sort])
+    if direction not in ("asc", "desc"):
+        direction = DEFAULT_DIR[sort]
+    return sort, direction
+
+
+def filter_sql(f):
+    """Filtre sözlüğünü (name, country, league, position, age_min/max, value_min/max)
+    WHERE koşullarına çevirir. Arama, kulüp ve admin sayfaları ortak kullanır."""
+    where, params = [], []
+    if f.get("name"):
+        where.append("name ILIKE %s"); params.append(f"%{f['name']}%")
+    for key, col in (("country", "country"), ("league", "league"), ("position", "main_position")):
+        if f.get(key):
+            where.append(f"{col} = %s"); params.append(f[key])
+    for key, cond, mult in (("age_min", "age >= %s", 1), ("age_max", "age <= %s", 1),
+                            ("value_min", "market_value_eur >= %s", 1_000_000),   # milyon € -> €
+                            ("value_max", "market_value_eur <= %s", 1_000_000)):
+        n = num(f.get(key))
+        if n is not None:
+            where.append(cond); params.append(n * mult)
+    return where, params
 
 
 def safe_next(default):
@@ -147,45 +182,17 @@ def logout():
 
 
 # ---------- arama ----------
-SORTS = {"value": "market_value_eur", "age": "age", "name": "name",
-         "goals": "goals", "assists": "assists"}
-DEFAULT_DIR = {"value": "desc", "age": "asc", "name": "asc",
-               "goals": "desc", "assists": "desc"}
-
-
 @app.route("/search")
 @login_required
 def search():
     keys = ["name", "country", "league", "position", "age_min", "age_max", "value_min", "value_max"]
     f = {k: request.args.get(k, "").strip() for k in keys}
-    sort = request.args.get("sort", "value")
-    if sort not in SORTS:
-        sort = "value"
-    direction = request.args.get("dir", DEFAULT_DIR[sort])
-    if direction not in ("asc", "desc"):
-        direction = DEFAULT_DIR[sort]
+    sort, direction = parse_sort()
     try:
         page = max(1, int(request.args.get("page", 1)))
     except ValueError:
         page = 1
-
-    where, params = [], []
-    if f["name"]:
-        where.append("name ILIKE %s"); params.append(f"%{f['name']}%")
-    if f["country"]:
-        where.append("country = %s"); params.append(f["country"])
-    if f["league"]:
-        where.append("league = %s"); params.append(f["league"])
-    if f["position"]:
-        where.append("main_position = %s"); params.append(f["position"])
-    if num(f["age_min"]) is not None:
-        where.append("age >= %s"); params.append(num(f["age_min"]))
-    if num(f["age_max"]) is not None:
-        where.append("age <= %s"); params.append(num(f["age_max"]))
-    if num(f["value_min"]) is not None:          # milyon euro
-        where.append("market_value_eur >= %s"); params.append(num(f["value_min"]) * 1_000_000)
-    if num(f["value_max"]) is not None:
-        where.append("market_value_eur <= %s"); params.append(num(f["value_max"]) * 1_000_000)
+    where, params = filter_sql(f)
     w = (" WHERE " + " AND ".join(where)) if where else ""
 
     total = query("SELECT count(*) AS n FROM player_overview" + w, params, one=True)["n"]
@@ -328,26 +335,9 @@ def club(cid):
         abort(404)
     keys = ["name", "position", "age_min", "age_max", "value_min", "value_max"]
     f = {k: request.args.get(k, "").strip() for k in keys}
-    sort = request.args.get("sort", "value")
-    if sort not in SORTS:
-        sort = "value"
-    direction = request.args.get("dir", DEFAULT_DIR[sort])
-    if direction not in ("asc", "desc"):
-        direction = DEFAULT_DIR[sort]
-
-    where, params = ["r.club_id = %s"], [cid]
-    if f["name"]:
-        where.append("name ILIKE %s"); params.append(f"%{f['name']}%")
-    if f["position"]:
-        where.append("main_position = %s"); params.append(f["position"])
-    if num(f["age_min"]) is not None:
-        where.append("age >= %s"); params.append(num(f["age_min"]))
-    if num(f["age_max"]) is not None:
-        where.append("age <= %s"); params.append(num(f["age_max"]))
-    if num(f["value_min"]) is not None:
-        where.append("market_value_eur >= %s"); params.append(num(f["value_min"]) * 1_000_000)
-    if num(f["value_max"]) is not None:
-        where.append("market_value_eur <= %s"); params.append(num(f["value_max"]) * 1_000_000)
+    sort, direction = parse_sort()
+    where, params = filter_sql(f)
+    where.insert(0, "r.club_id = %s"); params.insert(0, cid)
     players = query("SELECT po.* FROM player_overview po JOIN club_roster r USING (player_id) WHERE "
                     + " AND ".join(where) +
                     f" ORDER BY {SORTS[sort]} {direction} NULLS LAST, po.player_id", params)
@@ -379,12 +369,11 @@ def compare():
 @login_required
 def compare_add(pid):
     ids = session.get("cmp", [])
-    if pid in ids:
-        pass
-    elif len(ids) >= 4:
-        flash("En fazla 4 oyuncu karşılaştırılabilir.")
-    else:
-        ids.append(pid)
+    if pid not in ids:
+        if len(ids) >= 4:
+            flash("En fazla 4 oyuncu karşılaştırılabilir.")
+        else:
+            ids.append(pid)
     session["cmp"] = ids
     return redirect(safe_next(url_for("compare")))
 
@@ -434,15 +423,8 @@ def admin():
     af = {k: request.args.get(k, "").strip() for k in ["aname", "acountry", "aleague", "aposition"]}
     found = None
     if any(af.values()):
-        where, params = [], []
-        if af["aname"]:
-            where.append("name ILIKE %s"); params.append(f"%{af['aname']}%")
-        if af["acountry"]:
-            where.append("country = %s"); params.append(af["acountry"])
-        if af["aleague"]:
-            where.append("league = %s"); params.append(af["aleague"])
-        if af["aposition"]:
-            where.append("main_position = %s"); params.append(af["aposition"])
+        where, params = filter_sql({"name": af["aname"], "country": af["acountry"],
+                                    "league": af["aleague"], "position": af["aposition"]})
         found = query("SELECT * FROM player_overview WHERE " + " AND ".join(where) +
                       " ORDER BY market_value_eur DESC NULLS LAST, player_id LIMIT 50", params)
     return render_template(
@@ -466,11 +448,14 @@ def admin():
 @app.route("/admin/role/<int:uid>", methods=["POST"])
 @admin_required
 def admin_role(uid):
+    role = request.form.get("role")
     if uid == session["user_id"]:
         flash("Kendi rolünü değiştiremezsin.")
+    elif role not in ("admin", "scout"):
+        flash("Geçersiz rol.")
     else:
         transaction([("UPDATE users SET role_id = (SELECT role_id FROM roles WHERE name = %s) "
-                      "WHERE user_id = %s", (request.form["role"], uid)),
+                      "WHERE user_id = %s", (role, uid)),
                      audit("UPDATE", "users", uid)])
     return redirect(url_for("admin"))
 

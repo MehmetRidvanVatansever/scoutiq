@@ -20,4 +20,4 @@ gol ve asist tüm zamanların toplamıdır.
 - `scripts/load_data.py` veri temizleme ve yükleme · `scripts/season_data.py` 2024 hesaplaması
 - `scripts/apply_sql.py` bir .sql dosyasını veri silmeden uygular (ör. view güncellemesi)
 - `scripts/migrate_2024.py` eski sürümden geçiş için tek seferlik betik (yeni kurulumda gerekmez)
-- `templates/` HTML şablonları (`_macros.html` ortak parçalar) · `static/` CSS · `docs/` dokümantasyon
+- `templates/` HTML şablonları (`_macros.html` ortak parçalar) · `static/` CSS · `docs/` dokümantasyon  
